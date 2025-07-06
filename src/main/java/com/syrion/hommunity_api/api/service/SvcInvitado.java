@@ -13,6 +13,4 @@ public interface SvcInvitado {
     public ResponseEntity<List<DtoInvitadoOut>> getInvitados();
     public ResponseEntity<DtoInvitadoOut> getInvitado(Long id);
     public ResponseEntity<ApiResponse> createInvitado(DtoInvitadoIn in);
-    public ResponseEntity<ApiResponse> setHoraEntrada(Long id);
-    public ResponseEntity<ApiResponse> setHoraSalida(Long id);
 }

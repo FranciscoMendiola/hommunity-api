@@ -1,9 +1,6 @@
 package com.syrion.hommunity_api.api.service;
 
-import java.sql.Date;
-import java.sql.Time;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,13 +61,23 @@ public class SvcInvitadoImp implements SvcInvitado {
     @Override
     public ResponseEntity<ApiResponse> createInvitado(DtoInvitadoIn in) {
         try {
-            if (in.getFechaVisita().before(Date.valueOf(LocalDate.now())))
-                throw new ApiException(HttpStatus.BAD_REQUEST, "La fecha de visita no puede ser anterior a la fecha actual.");
+            // Validar que la fecha de entrada no sea anterior a la fecha/hora actual
+            if (in.getFechaEntrada().isBefore(LocalDateTime.now())) {
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                        "La fecha de entrada no puede ser anterior a la fecha actual.");
+            }
+
+            // Validar que la fecha de salida sea posterior a la fecha de entrada
+            if (in.getFechaSalida().isBefore(in.getFechaEntrada())) {
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                        "La fecha de salida no puede ser anterior a la fecha de entrada.");
+            }
 
             Usuario usuario = repoUsuario.findById(in.getIdUsuario()).orElse(null);
 
-            if (usuario == null)
-                throw new ApiException(HttpStatus.NOT_FOUND, "El id del usuario residente no esta registrado.");
+            if (usuario == null) {
+                throw new ApiException(HttpStatus.NOT_FOUND, "El id del usuario residente no está registrado.");
+            }
 
             Invitado invitado = mapperInvitado.fromInvitado(in);
             invitado.setIdUsuario(usuario);
@@ -78,49 +85,7 @@ public class SvcInvitadoImp implements SvcInvitado {
             repoInvitado.save(invitado);
 
             return new ResponseEntity<>(new ApiResponse("Invitado creado correctamente"), HttpStatus.CREATED);
-        } catch (DataAccessException e) {
-            throw new DBAccessException(e);
-        }
-    }
 
-    @Override
-    public ResponseEntity<ApiResponse> setHoraEntrada(Long id) {
-        try {
-            Invitado invitado = validateId(id);
-
-            
-            if (!invitado.getHoraEntrada().toLocalTime().equals(LocalTime.MIDNIGHT)) {
-                throw new ApiException(HttpStatus.CONFLICT, "La hora de entrada ya ha sido registrada.");
-            }
-
-            invitado.setHoraEntrada(new Time(System.currentTimeMillis()));
-            repoInvitado.save(invitado);
-
-            return new ResponseEntity<>(new ApiResponse("Hora de entrada registrada correctamente."),
-                    HttpStatus.ACCEPTED);
-        } catch (DataAccessException e) {
-            throw new DBAccessException(e);
-        }
-    }
-
-    @Override
-    public ResponseEntity<ApiResponse> setHoraSalida(Long id) {
-        try {
-            Invitado invitado = validateId(id);
-
-            if (!invitado.getHoraSalida().toLocalTime().equals(LocalTime.MIDNIGHT))
-                throw new ApiException(HttpStatus.CONFLICT, "La hora de salida ya ha sido registrada.");
-
-            if (invitado.getHoraEntrada().toLocalTime().equals(LocalTime.MIDNIGHT))
-                throw new ApiException(HttpStatus.CONFLICT, "La hora de de entrada no ha sido registrada.");
-
-                
-            invitado.setHoraSalida(new Time(System.currentTimeMillis()));
-                
-            repoInvitado.save(invitado); 
-            
-            return new ResponseEntity<>(new ApiResponse("Hora de salida registrada correctamente."),
-                    HttpStatus.ACCEPTED);
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }

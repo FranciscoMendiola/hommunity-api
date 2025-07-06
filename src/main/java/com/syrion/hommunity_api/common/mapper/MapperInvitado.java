@@ -21,10 +21,8 @@ public class MapperInvitado {
         invitado.setNombre(in.getNombre());
         invitado.setApellidoPaterno(in.getApellidoPaterno());
         invitado.setApellidoMaterno(in.getApellidoMaterno());
-        invitado.setFechaVisita(in.getFechaVisita());
-
-        invitado.setHoraEntrada(Time.valueOf(LocalTime.MIDNIGHT));
-        invitado.setHoraSalida(Time.valueOf(LocalTime.MIDNIGHT));
+        invitado.setFechaEntrada(in.getFechaEntrada());
+        invitado.setFechaSalida(in.getFechaSalida());
 
 
         return invitado;
@@ -37,9 +35,8 @@ public class MapperInvitado {
         out.setNombre(invitado.getNombre());
         out.setApellidoPaterno(invitado.getApellidoPaterno());
         out.setApellidoMaterno(invitado.getApellidoMaterno());
-        out.setFechaVisita(invitado.getFechaVisita());
-        out.setHoraEntrada(invitado.getHoraEntrada());
-        out.setHoraSalida(invitado.getHoraSalida());
+        out.setFechaEntrada(invitado.getFechaEntrada());
+        out.setFechaSalida(invitado.getFechaSalida());
         out.setIdUsuario(invitado.getIdUsuario().getIdUsuario());
 
         return out;

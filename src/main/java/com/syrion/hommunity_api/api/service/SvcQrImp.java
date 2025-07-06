@@ -1,7 +1,8 @@
 package com.syrion.hommunity_api.api.service;
 
-import java.sql.Date;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,8 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.syrion.hommunity_api.api.dto.in.DtoCodigoIn;
-import com.syrion.hommunity_api.api.dto.in.DtoCodigoResidenteIn;
+import com.syrion.hommunity_api.api.dto.in.DtoQrInvitadoIn;
+import com.syrion.hommunity_api.api.dto.in.DtoQrResidenteIn;
 import com.syrion.hommunity_api.api.entity.Invitado;
 import com.syrion.hommunity_api.api.entity.QR;
 import com.syrion.hommunity_api.api.entity.Usuario;
@@ -38,14 +39,23 @@ public class SvcQrImp implements SvcQr {
     @Autowired
     private UsuarioRepository repoUsuario;
 
+    @Override
+    public ResponseEntity <QR> getCodigo(Long id) {
+        try {
+            QR qr = validateId(id);
 
+            return new ResponseEntity<>(qr , HttpStatus.OK);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
+        }
+    }
 
     @Override
     public ResponseEntity<List<QR>> getCodigos() {
         try {
             List<QR> qrs = repoQr.findAll();
 
-            return new ResponseEntity<>(qrs, HttpStatus.OK );
+            return new ResponseEntity<>(qrs, HttpStatus.OK);
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }
@@ -55,42 +65,59 @@ public class SvcQrImp implements SvcQr {
     public ResponseEntity<List<QR>> getCodigosActivos() {
         try {
             List<QR> qrs = repoQr.findByActiveStatus();
-            
-            return new ResponseEntity<>(qrs, HttpStatus.OK );
+
+            return new ResponseEntity<>(qrs, HttpStatus.OK);
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }
     }
 
     @Override
-    public ResponseEntity<QR> getCodigo(Long id) {
+    public ResponseEntity<ApiResponse> createCodigoInvitado(DtoQrInvitadoIn in) {
         try {
-            QR qr = validateId(id);
+            Invitado invitado = repoInvitado.findById(in.getIdInvitado())
+                    .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "El invitado no está registrado."));
 
-            return new ResponseEntity<>(qr, HttpStatus.OK);
-        } catch (DataAccessException e) {
-            throw new DBAccessException(e);
-        }
-    }
+            LocalDate today = LocalDate.now();
+            LocalDate fechaEntrada = invitado.getFechaEntrada().toLocalDate();
+            LocalDate fechaSalida = invitado.getFechaSalida().toLocalDate();
 
-    @Override
-    public ResponseEntity<ApiResponse> createCodigo(DtoCodigoIn in) {
-        try {
-            Invitado invitado = repoInvitado.findById(in.getIdInvitado()).orElse(null);
+            if (fechaEntrada.isBefore(today))
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                        "El QR no se puede asociar a un invitado cuya fecha de entrada ya es anterior a la fecha actual.");
 
-            if (invitado == null)
-                throw new ApiException(HttpStatus.BAD_REQUEST, "El invitado no esta registrado.");
+            long days = ChronoUnit.DAYS.between(fechaEntrada, fechaSalida) + 1;
+            int maxUsos = (int) (days * 20);
 
-            if (Date.valueOf(LocalDate.now()).after(invitado.getFechaVisita()))
-                throw new ApiException(HttpStatus.BAD_REQUEST, "El QR no se puede asociar a un invitado con fecha de visita anterior a la fecha actual.");
+            if (in.getUsosDisponibles() > maxUsos)
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                        "El número de usos excede el límite permitido de " + maxUsos + " usos para un periodo de "
+                                + days + " día(s).");
 
             QR qr = mapper.fromQR(in);
-
             qr.setIdInvitado(invitado);
 
             repoQr.save(qr);
 
-            return new ResponseEntity<>(new ApiResponse("Codigo QR registrado correctamente"), HttpStatus.CREATED);
+            return new ResponseEntity<>(new ApiResponse("Código QR registrado correctamente"), HttpStatus.CREATED);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse> createCodigoResidente(DtoQrResidenteIn in) {
+        try {
+            Usuario usuario = repoUsuario.findById(in.getIdUsuario())
+                    .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "El usuario residente no está registrado."));
+
+            QR qr = mapper.fromQR(in);
+            qr.setIdUsuario(usuario);
+
+            repoQr.save(qr);
+
+            return new ResponseEntity<>(new ApiResponse("Código QR para residente creado correctamente"),
+                    HttpStatus.CREATED);
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }
@@ -101,21 +128,29 @@ public class SvcQrImp implements SvcQr {
         try {
             QR qr = validateId(id);
 
-            if (qr.getIdInvitado() != null) {
-                if (qr.getIdInvitado().getFechaVisita().before(Date.valueOf(LocalDate.now()))) {
+            if (!qr.getVigente())
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El código QR ha expirado.");
+
+            if (qr.getIdUsuario() != null)
+            return new ResponseEntity<>(new ApiResponse("Codigo QR validado correctamente"), HttpStatus.OK);
+            
+            if (qr.getIdUsuario() == null) {
+                LocalDate today = LocalDate.now();
+                LocalDate fechaSalida = qr.getIdInvitado().getFechaSalida().toLocalDate();
+                if (fechaSalida.isBefore(today)) {
                     qr.setVigente(false);
                     repoQr.save(qr);
                     throw new ApiException(HttpStatus.BAD_REQUEST, "El código QR ha expirado.");
                 }
+
+                if (qr.getUsosDisponibles() < 1) {
+                    qr.setVigente(false);
+                    repoQr.save(qr);
+                    throw new ApiException(HttpStatus.BAD_REQUEST, "El código QR ya no tiene usos. Debes generar uno nuevo.");
+                }                 
             }
-            // Si es de residente, no requiere esta validación de fecha
-
-
-            if (!qr.getVigente())
-                throw new ApiException(HttpStatus.BAD_REQUEST, "El codigo QR ya ha sido utilizado.");
-
-
-            qr.setVigente(false);
+            
+            qr.setUsosDisponibles(qr.getUsosDisponibles() - 1);
             repoQr.save(qr);
 
             return new ResponseEntity<>(new ApiResponse("Codigo QR validado correctamente"), HttpStatus.OK);
@@ -135,21 +170,4 @@ public class SvcQrImp implements SvcQr {
 
         return qr;
     }
-
-    @Override
-    public ResponseEntity<ApiResponse> createCodigoResidente(DtoCodigoResidenteIn in) {
-        try {
-            Usuario usuario = repoUsuario.findById(in.getIdUsuario())
-                    .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "El usuario residente no está registrado."));
-
-            QR qr = mapper.fromQR(in, usuario);
-
-            repoQr.save(qr);
-
-            return new ResponseEntity<>(new ApiResponse("Código QR para residente creado correctamente"), HttpStatus.CREATED);
-        } catch (DataAccessException e) {
-            throw new DBAccessException(e);
-        }
-    }
-
 }

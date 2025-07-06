@@ -23,5 +23,4 @@ public class DBAccessException extends RuntimeException{
 	public static long getSerialversionuid() {
 		return serialVersionUID;
 	}
-
 }

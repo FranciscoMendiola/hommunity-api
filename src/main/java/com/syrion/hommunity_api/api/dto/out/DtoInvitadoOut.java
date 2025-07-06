@@ -1,7 +1,6 @@
 package com.syrion.hommunity_api.api.dto.out;
 
-import java.sql.Date;
-import java.sql.Time;
+import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -24,14 +23,11 @@ public class DtoInvitadoOut {
     @JsonProperty("apellidoMaterno")
     private String apellidoMaterno;
 
-    @JsonProperty("fechaVisita")
-    private Date fechaVisita;
-
-    @JsonProperty("horaEntrada")
-    private Time horaEntrada;
+    @JsonProperty("fechaEntrada")
+    private LocalDateTime fechaEntrada;
     
-    @JsonProperty("horaSalida")
-    private Time horaSalida;
+    @JsonProperty("fechaSalida")
+    private LocalDateTime fechaSalida;
 
     @JsonProperty("idUsuario")
     private Long idUsuario;

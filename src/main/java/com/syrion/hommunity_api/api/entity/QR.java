@@ -1,6 +1,7 @@
 package com.syrion.hommunity_api.api.entity;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,15 +29,18 @@ public class QR {
     private String codigo;
 
     @Column(name = "fecha_creacion")
-    private Timestamp fechaCreacion;
-
+    private LocalDateTime fechaCreacion;
+    
     @Column(name = "vigente")
     private Boolean vigente;
     
+    @Column(name = "usos_disponibles")
+    private Integer usosDisponibles;
+
     @ManyToOne
     @JoinColumn(name = "id_invitado", referencedColumnName = "id_invitado")
     private Invitado idInvitado;
-
+    
     @ManyToOne
     @JoinColumn(name = "id_usuario", referencedColumnName = "id_usuario")
     private Usuario idUsuario;

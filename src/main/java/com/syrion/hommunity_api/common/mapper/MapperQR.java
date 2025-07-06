@@ -1,31 +1,32 @@
 package com.syrion.hommunity_api.common.mapper;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
 
-import com.syrion.hommunity_api.api.dto.in.DtoCodigoIn;
-import com.syrion.hommunity_api.api.dto.in.DtoCodigoResidenteIn;
+import com.syrion.hommunity_api.api.dto.in.DtoQrInvitadoIn;
+import com.syrion.hommunity_api.api.dto.in.DtoQrResidenteIn;
 import com.syrion.hommunity_api.api.entity.QR;
-import com.syrion.hommunity_api.api.entity.Usuario;
 
 @Service
 public class MapperQR {
 
-    public QR fromQR(DtoCodigoIn in) {
+    public QR fromQR(DtoQrInvitadoIn in) {
         QR qr = new QR();
         qr.setCodigo(generateNumericCode());
-        qr.setFechaCreacion(new Timestamp(System.currentTimeMillis()));
+        qr.setFechaCreacion(LocalDateTime.now());
+        qr.setUsosDisponibles(in.getUsosDisponibles() * 2);
         qr.setVigente(true);
         return qr;
     }
 
-    public QR fromQR(DtoCodigoResidenteIn in, Usuario usuario) {
+    public QR fromQR(DtoQrResidenteIn in) {
         QR qr = new QR();
         qr.setCodigo(generateNumericCode());
-        qr.setFechaCreacion(new Timestamp(System.currentTimeMillis()));
+        qr.setFechaCreacion(LocalDateTime.now());
+        qr.setUsosDisponibles(-1);
         qr.setVigente(true);
-        qr.setIdUsuario(usuario);
+        
         return qr;
     }
 

@@ -9,5 +9,4 @@ public class HommunityApiApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(HommunityApiApplication.class, args);
 	}
-
 }

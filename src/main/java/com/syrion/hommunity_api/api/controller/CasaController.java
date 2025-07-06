@@ -2,6 +2,7 @@ package com.syrion.hommunity_api.api.controller;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,12 +26,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Casa", description = "Gestión de casas")
 public class CasaController {
 
-    private final SvcCasa svcCasa;
+    @Autowired
+    private SvcCasa svcCasa;
 
-    public CasaController(SvcCasa svcCasa) {
-        this.svcCasa = svcCasa;
-    }
-    
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('Administrador', 'Residente')")
     @Operation(summary = "Obtener casa por ID", description = "Permite obtener los detalles de una casa específica por su ID.")

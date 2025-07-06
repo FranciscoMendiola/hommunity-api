@@ -1,8 +1,7 @@
 package com.syrion.hommunity_api.api.entity;
 
 
-import java.sql.Date;
-import java.sql.Time;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,14 +34,11 @@ public class Invitado {
     @Column(name = "apellido_materno")
     private String apellidoMaterno;
 
-    @Column(name = "fecha_visita")
-    private Date fechaVisita;
-
-    @Column(name = "hora_entrada")
-    private Time horaEntrada;
+    @Column(name = "fecha_entrada")
+    private LocalDateTime fechaEntrada;
     
-    @Column(name = "hora_salida")
-    private Time horaSalida;
+    @Column(name = "fecha_salida")
+    private LocalDateTime fechaSalida;
 
     @ManyToOne
     @JoinColumn(name = "id_usuario", referencedColumnName = "id_usuario")

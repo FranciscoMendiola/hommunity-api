@@ -52,16 +52,4 @@ public class InvitadoController {
 
         return svc.createInvitado(in);
     }
-
-    @PatchMapping("{id}/entrada")
-    @Operation(summary = "Registrar hora de entrada", description = "Permite registrar la hora de entrada (por única vez) de un invitado por su ID.")
-    public ResponseEntity<ApiResponse> seHoraEntrada(@Valid @PathVariable Long id) {
-        return svc.setHoraEntrada(id);
-    }
-
-    @PatchMapping("{id}/salida")
-    @Operation(summary = "Registrar hora de salida", description = "Permite registrar la hora de salida (por única vez) de un invitado por su ID.")
-    public ResponseEntity<ApiResponse> seHoraSalida(@Valid @PathVariable Long id) {
-        return svc.setHoraSalida(id);
-    }
 }

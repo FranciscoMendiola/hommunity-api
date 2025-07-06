@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.syrion.hommunity_api.api.dto.in.DtoCodigoIn;
-import com.syrion.hommunity_api.api.dto.in.DtoCodigoResidenteIn;
+import com.syrion.hommunity_api.api.dto.in.DtoQrInvitadoIn;
+import com.syrion.hommunity_api.api.dto.in.DtoQrResidenteIn;
 import com.syrion.hommunity_api.api.entity.QR;
 import com.syrion.hommunity_api.api.service.SvcQr;
 import com.syrion.hommunity_api.common.dto.ApiResponse;
@@ -32,6 +32,7 @@ public class QrController {
     @Autowired
     private SvcQr svc;
 
+    
     @GetMapping
     @Operation(summary = "Obtener lista de códigos QR", description = "Permite obtener una lista de todos los códigos QR registrados en el sistema.")
     public ResponseEntity<List<QR>> getCodigos() {
@@ -50,12 +51,12 @@ public class QrController {
         return svc.getCodigo(id);   
     }
 
-    @PostMapping
+    @PostMapping("/invitado")
     @Operation(summary = "Crear código QR", description = "Permite crear un nuevo código QR en el sistema.")
-    public ResponseEntity<ApiResponse> createCodigo(@Valid @RequestBody DtoCodigoIn in, BindingResult bindingResult) {
+    public ResponseEntity<ApiResponse> createCodigoInvitado(@Valid @RequestBody DtoQrInvitadoIn in, BindingResult bindingResult) {
 		if (bindingResult.hasErrors())
 			throw new ApiException(HttpStatus.BAD_REQUEST, bindingResult.getFieldError().getDefaultMessage());
-        return svc.createCodigo(in);
+        return svc.createCodigoInvitado(in);
     }
 
     @PostMapping("/{id}/validate")
@@ -66,10 +67,9 @@ public class QrController {
 
     @PostMapping("/residente")
     @Operation(summary = "Crear código QR para residente", description = "Permite crear un código QR para un residente con vigencia de acceso prolongada.")
-    public ResponseEntity<ApiResponse> createCodigoResidente(@Valid @RequestBody DtoCodigoResidenteIn in, BindingResult bindingResult) {
+    public ResponseEntity<ApiResponse> createCodigoResidente(@Valid @RequestBody DtoQrResidenteIn in, BindingResult bindingResult) {
         if (bindingResult.hasErrors())
             throw new ApiException(HttpStatus.BAD_REQUEST, bindingResult.getFieldError().getDefaultMessage());
         return svc.createCodigoResidente(in);
     }
-
 }
