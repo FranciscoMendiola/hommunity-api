@@ -24,51 +24,78 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-            .csrf().disable()
-            .exceptionHandling(exception -> exception
-            .authenticationEntryPoint(new CustomAuthEntryPoint()))
-            .authorizeHttpRequests(auth -> auth
-                // Rutas públicas
-                .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+        http.csrf(csrf -> csrf.disable())
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(new CustomAuthEntryPoint()))
+                .authorizeHttpRequests(auth -> auth
+                        // Rutas públicas
+                        // ===========================================================================================
 
-                // Usuario
-                .requestMatchers(HttpMethod.POST, "/usuario").permitAll()
+                        // Auth
+                        .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
-                // Rutas protegidas (solo con roles específicos)
-                .requestMatchers(HttpMethod.GET, "/usuario/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        // Rutas con token (Roles específicos)
+                        // ===========================================================================================
 
-                // Zona
-                .requestMatchers(HttpMethod.POST, "/zona/**").hasAuthority("ADMINISTRADOR")
-                .requestMatchers(HttpMethod.GET, "/zona/**").permitAll()
+                        // Rutas de casa
+                        .requestMatchers(HttpMethod.GET, "/casa/zona/**").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/casa/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        .requestMatchers(HttpMethod.POST, "/casa/**").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.DELETE, "/casa/**").hasAnyAuthority("ADMINISTRADOR")
 
-                // Invitado
-                .requestMatchers(HttpMethod.GET, "/invitado/**").hasAnyAuthority("RESIDENTE", "ADMINISTRADOR")
-                .requestMatchers(HttpMethod.POST, "/invitado").hasAnyAuthority("RESIDENTE", "ADMINISTRADOR")
-                .requestMatchers(HttpMethod.PATCH, "/invitado/**").hasAuthority("ADMINISTRADOR")
+                        // Rutas de familia
+                        .requestMatchers(HttpMethod.GET, "/familia/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        .requestMatchers(HttpMethod.POST, "/familia/**").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.PATCH, "/familia/**").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.DELETE, "/familia/**").hasAnyAuthority("ADMINISTRADOR")
 
+                        // Invitado
+                        .requestMatchers(HttpMethod.GET, "/invitado").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/invitado/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        .requestMatchers(HttpMethod.POST, "/invitado/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
 
-                // Rutas de casa
-                .requestMatchers(HttpMethod.POST, "/casa/**").hasAnyAuthority("ADMINISTRADOR")
+                        // Qr
+                        .requestMatchers(HttpMethod.GET, "/qr").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/qr/active").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/qr/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        .requestMatchers(HttpMethod.POST, "/qr/invitado").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        .requestMatchers(HttpMethod.POST, "/qr/**").hasAnyAuthority("ADMINISTRADOR")
 
-                .requestMatchers(HttpMethod.DELETE, "/casa/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        // Usuario
+                        .requestMatchers(HttpMethod.POST, "/usuario").permitAll() // Ruta pública
+                        .requestMatchers(HttpMethod.GET, "/usuario/zona/**").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/usuario/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        .requestMatchers(HttpMethod.POST, "/usuario/**").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.PATCH, "/usuario/**/estado").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.PATCH, "/usuario/**/contraseña")
+                        .hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
 
-                // Rutas de familia
-                .requestMatchers(HttpMethod.POST, "/familia/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        // Zona
+                        .requestMatchers(HttpMethod.GET, "/zona/**").hasAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.POST, "/zona/**").hasAuthority("ADMINISTRADOR")
 
-                .requestMatchers(HttpMethod.DELETE, "/familia/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        // Todo lo demás requiere autenticación
+                        .anyRequest().authenticated()
 
-                // Familias por zona
-                .requestMatchers(HttpMethod.GET, "/familia/zona/**").permitAll()
+                // .requestMatchers(HttpMethod.GET, "/casa/**").hasAnyAuthority("ADMINISTRADOR",
+                // "RESIDENTE")
+                // .requestMatchers(HttpMethod.GET,
+                // "/familia/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                // .requestMatchers(HttpMethod.POST,
+                // "/invitado/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                // .requestMatchers(HttpMethod.GET,
+                // "/invitado/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                // .requestMatchers(HttpMethod.GET, "/qr/**").hasAnyAuthority("ADMINISTRADOR",
+                // "RESIDENTE")
+                // .requestMatchers(HttpMethod.PATCH,
+                // "/usuario/**/contraseña").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                // .requestMatchers(HttpMethod.GET,
+                // "/usuario/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE"))
 
-                // Rutas de QR
-                .requestMatchers(HttpMethod.POST, "/qr/residente").hasAnyAuthority("RESIDENTE")
+                // .anyRequest().hasAuthority("ADMINISTRADOR")
 
-                // Todo lo demás requiere autenticación
-                .anyRequest().authenticated()
-            )
-            // Filtro JWT
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                // Filtro JWT}
+                ).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -78,4 +105,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-
