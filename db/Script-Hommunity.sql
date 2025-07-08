@@ -1,4 +1,3 @@
- 
 -- CREACIÓN DE TABLAS BÁSICAS SIN RELACIONES
 
 -- zona
