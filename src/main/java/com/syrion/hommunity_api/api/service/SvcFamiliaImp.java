@@ -103,33 +103,41 @@ public class SvcFamiliaImp implements SvcFamilia {
         }
     }
 
-    @Override
-    public ResponseEntity<ApiResponse> updateUsuarioRegistrador(Long idFamilia, DtoUsuarioRegistradorIn in) {
-        try {
-            Familia familia = validateId(idFamilia);
+@Override
+public ResponseEntity<ApiResponse> updateUsuarioRegistrador(Long idFamilia, DtoUsuarioRegistradorIn in) {
+    try {
+        Familia familia = validateId(idFamilia);
 
-            Usuario usuario = usuarioRepository.findById(in.getIdUsuarioRegistrador()).orElse(null);
+        Usuario usuario = usuarioRepository.findById(in.getIdUsuarioRegistrador()).orElse(null);
 
-            if (usuario == null)
-                throw new ApiException(HttpStatus.NOT_FOUND, "El id del usuario registrador no existe");
+        if (usuario == null)
+            throw new ApiException(HttpStatus.NOT_FOUND, "El id del usuario registrador no existe");
 
-            familia.setIdUsuarioRegistrador(in.getIdUsuarioRegistrador());
-            familia.setFotoIdentificacion(usuario.getFotoIdentificacion());
-
-            if (!familia.getEstado().toLowerCase().equals("aprobado"))
-                familia.setEstado("APROBADO");
-
-            familiaRepository.save(familia);
-
-            return new ResponseEntity<>(new ApiResponse("Usuario registrador actualizado correctamente"), HttpStatus.OK);
-        } catch (DataAccessException e) {
-            // No ocurrirá darse por la verificación de arriba
-            if (e.getLocalizedMessage().contains("fk_familia_id_usuario_registrador"))
-                throw new ApiException(HttpStatus.NOT_FOUND, "El id del usuario registrador no existe");
-
-            throw new DBAccessException(e);
+        // Actualiza el estado del usuario a APROBADO si no lo está
+        if (!usuario.getEstado().equalsIgnoreCase("APROBADO")) {
+            usuario.setEstado("APROBADO");
+            usuarioRepository.save(usuario);
         }
+
+        // Actualiza en familia
+        familia.setIdUsuarioRegistrador(in.getIdUsuarioRegistrador());
+        familia.setFotoIdentificacion(usuario.getFotoIdentificacion());
+
+        if (!familia.getEstado().equalsIgnoreCase("APROBADO"))
+            familia.setEstado("APROBADO");
+
+        familiaRepository.save(familia);
+
+        return new ResponseEntity<>(new ApiResponse("Usuario registrador actualizado correctamente"), HttpStatus.OK);
+    } catch (DataAccessException e) {
+        if (e.getLocalizedMessage().contains("fk_familia_id_usuario_registrador"))
+            throw new ApiException(HttpStatus.NOT_FOUND, "El id del usuario registrador no existe");
+
+        throw new DBAccessException(e);
     }
+}
+
+
 
     private Familia validateId(Long id) {
         Familia familia = familiaRepository.findById(id).orElse(null);
