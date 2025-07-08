@@ -12,7 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 public class CorsConfig implements CorsConfigurationSource {
 
 	@Override
-	public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
+	public CorsConfiguration getCorsConfiguration(@org.springframework.lang.NonNull HttpServletRequest request) {
 		CorsConfiguration corsConfiguration = new CorsConfiguration();
 		
 		corsConfiguration.setAllowedOriginPatterns(Arrays.asList("*"));

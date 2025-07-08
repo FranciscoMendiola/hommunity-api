@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,29 +48,35 @@ public class QrController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener código QR por ID", description = "Permite obtener los detalles de un código QR específico por su ID.")
-    public ResponseEntity<QR> getCodigo(@Valid @PathVariable Long id) {
+    public ResponseEntity<QR> getCodigo(@Valid @PathVariable("id") Long id) {
         return svc.getCodigo(id);   
     }
 
     @PostMapping("/invitado")
     @Operation(summary = "Crear código QR", description = "Permite crear un nuevo código QR en el sistema.")
     public ResponseEntity<ApiResponse> createCodigoInvitado(@Valid @RequestBody DtoQrInvitadoIn in, BindingResult bindingResult) {
-		if (bindingResult.hasErrors())
-			throw new ApiException(HttpStatus.BAD_REQUEST, bindingResult.getFieldError().getDefaultMessage());
+        if (bindingResult.hasErrors()) {
+            FieldError fieldError = bindingResult.getFieldError();
+            String errorMessage = fieldError != null ? fieldError.getDefaultMessage() : "Validation error";
+            throw new ApiException(HttpStatus.BAD_REQUEST, errorMessage);
+        }
         return svc.createCodigoInvitado(in);
     }
 
     @PostMapping("/{id}/validate")
     @Operation(summary = "Validar código QR", description = "Permite validar y usar (por única vez) un código QR por su ID.")
-    public ResponseEntity<ApiResponse> validar(@Valid @PathVariable Long id) {
+    public ResponseEntity<ApiResponse> validar(@Valid @PathVariable("id") Long id) {
         return svc.validar(id);
     }
 
     @PostMapping("/residente")
     @Operation(summary = "Crear código QR para residente", description = "Permite crear un código QR para un residente con vigencia de acceso prolongada.")
     public ResponseEntity<ApiResponse> createCodigoResidente(@Valid @RequestBody DtoQrResidenteIn in, BindingResult bindingResult) {
-        if (bindingResult.hasErrors())
-            throw new ApiException(HttpStatus.BAD_REQUEST, bindingResult.getFieldError().getDefaultMessage());
+        if (bindingResult.hasErrors()) {
+            FieldError fieldError = bindingResult.getFieldError();
+            String errorMessage = fieldError != null ? fieldError.getDefaultMessage() : "Validation error";
+            throw new ApiException(HttpStatus.BAD_REQUEST, errorMessage);
+        }
         return svc.createCodigoResidente(in);
     }
 }

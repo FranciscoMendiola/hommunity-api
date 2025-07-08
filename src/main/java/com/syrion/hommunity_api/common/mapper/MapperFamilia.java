@@ -1,40 +1,48 @@
 package com.syrion.hommunity_api.common.mapper;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDateTime;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.syrion.hommunity_api.api.dto.out.DtoFamiliaOut;
+import com.syrion.hommunity_api.api.dto.in.DtoFamiliaIn;
 import com.syrion.hommunity_api.api.entity.Familia;
+import com.syrion.hommunity_api.api.entity.Usuario;
+import com.syrion.hommunity_api.api.repository.UsuarioRepository;
+import com.syrion.hommunity_api.exception.ApiException;
+import com.syrion.hommunity_api.exception.DBAccessException;
 
 @Service
 public class MapperFamilia {
 
-    public DtoFamiliaOut fromFamilia(Familia familia) {
-        DtoFamiliaOut out = new DtoFamiliaOut();
-        out.setIdFamilia(familia.getIdFamilia());
-        out.setApellido(familia.getApellido());
-        out.setEstado(familia.getEstado() != null ? familia.getEstado().name() : null);
-        out.setFotoIdentificacion(familia.getFotoIdentificacion());
-        out.setFechaRegistro(familia.getFechaRegistro());
-        out.setIdCasa(familia.getIdCasa() != null ? familia.getIdCasa().getIdCasa() : null);
-        out.setIdUsuarioRegistrador(
-            familia.getIdUsuarioRegistrador() != null
-                ? familia.getIdUsuarioRegistrador().getIdUsuario()
-                : null
-        );
-        return out;
-    }
+    @Autowired
+    private UsuarioRepository usuarioRepository;
 
-    public List<DtoFamiliaOut> fromListDto(List<Familia> familias) {
-        List<DtoFamiliaOut> out = new ArrayList<>();
+    public Familia fromDtoFamiliaInTo(DtoFamiliaIn in) {
+        Familia familia = new Familia();
+        familia.setApellido(in.getApellido());
+        familia.setFechaRegistro(LocalDateTime.now());
+        familia.setIdCasa(in.getIdCasa());
+        if (in.getIdUsuarioRegistrador() != null) {
+            try {
+                Usuario usuario = usuarioRepository.findById(in.getIdUsuarioRegistrador()).orElse(null);
 
-        for (Familia familia : familias) {
-            out.add(fromFamilia(familia));
+                if (usuario == null)
+                    throw new ApiException(HttpStatus.NOT_FOUND, "El id del usuario registrador no existe");
+
+                familia.setIdUsuarioRegistrador(in.getIdUsuarioRegistrador());
+                familia.setFotoIdentificacion(usuario.getFotoIdentificacion());
+                familia.setEstado("APROBADO");
+            } catch (DataAccessException e) {
+                throw new DBAccessException(e);
+            }
+        } else {
+            familia.setEstado("PENDIENTE");
         }
 
-        return out;
+        return familia;
     }
 }
 

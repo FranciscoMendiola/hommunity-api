@@ -1,7 +1,6 @@
 package com.syrion.hommunity_api.api.dto.out;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.syrion.hommunity_api.api.enums.EstadoUsuario;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -26,7 +25,7 @@ public class DtoUsuarioOut {
     private String correo;
     
     @JsonProperty("estado")
-    private EstadoUsuario estado;
+    private String estado;
 
     @JsonProperty("fotoIdentificacion")
     private String fotoIdentificacion;

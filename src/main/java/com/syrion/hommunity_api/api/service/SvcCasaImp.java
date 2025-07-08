@@ -1,7 +1,6 @@
 package com.syrion.hommunity_api.api.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -10,9 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.syrion.hommunity_api.api.dto.in.DtoCasaIn;
-import com.syrion.hommunity_api.api.dto.out.DtoCasaOut;
 import com.syrion.hommunity_api.api.entity.Casa;
-import com.syrion.hommunity_api.api.entity.Zona;
 import com.syrion.hommunity_api.api.repository.CasaRepository;
 import com.syrion.hommunity_api.api.repository.ZonaRepository;
 import com.syrion.hommunity_api.common.dto.ApiResponse;
@@ -30,52 +27,70 @@ public class SvcCasaImp implements SvcCasa {
     private ZonaRepository zonaRepository;
 
     @Autowired
-    private MapperCasa mapperCasa;
+    private MapperCasa mapper;
 
     @Override
-    public ResponseEntity<DtoCasaOut> crearCasa(DtoCasaIn casaIn) {
+    public ResponseEntity<List<Casa>> getCasasPorZona(Long idZona) {
         try {
-            Zona zona = zonaRepository.findById(casaIn.getIdZona())
-                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Zona con id " + casaIn.getIdZona() + " no encontrada."));
+            if (!zonaRepository.existsById(idZona))
+                throw new ApiException(HttpStatus.NOT_FOUND, "El id de la zona no esta registrado");
 
-            Casa casa = mapperCasa.fromCasa(casaIn, zona);
+            List<Casa> casas = casaRepository.findByIdZona(idZona);
 
-            casaRepository.save(casa);
-
-            DtoCasaOut casaOut = mapperCasa.fromCasa(casa);
-
-            return new ResponseEntity<>(casaOut, HttpStatus.CREATED);
-            
+            return new ResponseEntity<>(casas, HttpStatus.OK);
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }
     }
 
     @Override
-    public ResponseEntity<ApiResponse> eliminarCasa(Long idCasa) {
-        if (!casaRepository.existsById(idCasa)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Casa no encontrada con id: " + idCasa));
+    public ResponseEntity<Casa> getCasaPorId(Long id) {
+        try {
+            Casa casa = validateId(id);
+            
+            return new ResponseEntity<>(casa, HttpStatus.OK);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
         }
-
-        casaRepository.deleteById(idCasa);
-        return ResponseEntity.ok(new ApiResponse("Casa eliminada exitosamente"));
     }
 
     @Override
-    public ResponseEntity<List<DtoCasaOut>> buscarPorZona(Long idZona) {
-        List<Casa> casas = casaRepository.findByIdZonaIdZona(idZona);
-        List<DtoCasaOut> casasOut = mapperCasa.fromCasaList(casas);
-        return ResponseEntity.ok(casasOut);
+    public ResponseEntity<Casa> createCasa(DtoCasaIn casaIn) {
+        try {
+            Casa casa = mapper.fromDtoCasaInToCasa(casaIn);
+
+            casaRepository.save(casa);
+
+            return new ResponseEntity<>(casa, HttpStatus.CREATED);
+        } catch (DataAccessException e) {
+            if (e.getLocalizedMessage().contains("ux_casa_id_zona_calle_numero"))
+                throw new ApiException(HttpStatus.CONFLICT, "La casa ya está registrado");
+
+            if (e.getLocalizedMessage().contains("fk_casa_id_zona"))
+                throw new ApiException(HttpStatus.NOT_FOUND, "El id de la zona no esta registrado");
+
+            throw new DBAccessException(e);
+        }
     }
 
     @Override
-    public ResponseEntity<DtoCasaOut> obtenerCasaPorId(Long id) {
-        Optional<Casa> casaOpt = casaRepository.findById(id);
-        if (casaOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    public ResponseEntity<ApiResponse> deleteCasa(Long idCasa) {
+        try {
+            validateId(idCasa);
+            casaRepository.deleteById(idCasa);
+            
+            return new ResponseEntity<>(new ApiResponse("Casa eliminada correctamente"), HttpStatus.OK);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
         }
-        DtoCasaOut casaOut = mapperCasa.fromCasa(casaOpt.get());
-        return ResponseEntity.ok(casaOut);
+    }
+
+    public Casa validateId(Long id) {
+        Casa casa = casaRepository.findById(id).orElse(null);
+
+        if (casa == null)
+            throw new ApiException(HttpStatus.NOT_FOUND, "El id de la casa no esta registrado");
+
+        return casa;
     }
 }

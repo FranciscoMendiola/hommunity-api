@@ -1,8 +1,6 @@
 package com.syrion.hommunity_api.api.dto.in;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.syrion.hommunity_api.api.entity.Familia;
-import com.syrion.hommunity_api.api.entity.Zona;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -30,14 +28,21 @@ public class DtoUsuarioIn{
     private String apellidoMaterno;
 
     @JsonProperty("correo")
-    @Pattern(regexp="^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$", message="El correo tiene un formato inválido")
     @NotNull(message = "El correo es obligatorio")
     @NotBlank(message = "El correo no puede estar en blanco")
+    @Pattern(
+        regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$",
+        message = "El correo no tiene un formato válido"
+    )
     private String correo;
 
     @JsonProperty("contraseña")
     @NotNull(message = "La contraseña es obligatoria")
     @NotBlank(message = "La contraseña no puede estar en blanco")
+    @Pattern(
+        regexp = "^(?=.*[A-Z])(?=.*[!@#$%^&*()_+{}\\[\\]:;<>,.?~\\\\\\-=\\/|]).{8,}$",
+        message = "La contraseña debe tener al menos 8 caracteres, incluir una mayúscula y un carácter especial"
+    )
     private String contraseña;
 
     @JsonProperty("fotoIdentificacion")
@@ -50,6 +55,5 @@ public class DtoUsuarioIn{
     private Long idZona;
     
     @JsonProperty("idFamilia")
-    @NotNull(message = "La familia es obligatoria")
     private Long idFamilia;
 }

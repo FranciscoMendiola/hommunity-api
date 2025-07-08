@@ -11,22 +11,23 @@ import com.syrion.hommunity_api.api.entity.QR;
 @Service
 public class MapperQR {
 
-    public QR fromQR(DtoQrInvitadoIn in) {
+    public QR fromDtoQrInToQrInvitado(DtoQrInvitadoIn in) {
         QR qr = new QR();
         qr.setCodigo(generateNumericCode());
         qr.setFechaCreacion(LocalDateTime.now());
         qr.setUsosDisponibles(in.getUsosDisponibles() * 2);
+        qr.setIdInvitado(in.getIdInvitado());
         qr.setVigente(true);
         return qr;
     }
 
-    public QR fromQR(DtoQrResidenteIn in) {
+    public QR fromDtoQrInToQrResidente(DtoQrResidenteIn in) {
         QR qr = new QR();
         qr.setCodigo(generateNumericCode());
         qr.setFechaCreacion(LocalDateTime.now());
         qr.setUsosDisponibles(-1);
+        qr.setIdUsuario(in.getIdUsuario());
         qr.setVigente(true);
-        
         return qr;
     }
 

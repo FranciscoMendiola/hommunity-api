@@ -6,9 +6,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.syrion.hommunity_api.api.entity.Usuario;
+import com.syrion.hommunity_api.common.util.ConverterRol;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -25,10 +27,13 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(SECRET_KEY.getBytes());
     }
 
+    @Autowired
+    private ConverterRol converterRol;
+
     public String generateToken(Usuario usuario) {
         Map<String, Object> claims = new HashMap<>();
         // Manejar caso donde idRol es null
-        claims.put("authorities", usuario.getIdRol() != null ? List.of(usuario.getIdRol().getNombreRol()) : List.of());
+        claims.put("authorities", List.of(converterRol.getNombreRol(usuario.getIdRol())));
         claims.put("id", usuario.getIdUsuario());
         claims.put("estado", usuario.getEstado());
 

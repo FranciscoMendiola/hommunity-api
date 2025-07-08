@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.syrion.hommunity_api.api.dto.in.DtoFamiliaIn;
 import com.syrion.hommunity_api.api.dto.in.DtoUsuarioRegistradorIn;
-import com.syrion.hommunity_api.api.dto.out.DtoFamiliaOut;
+import com.syrion.hommunity_api.api.entity.Familia;
 import com.syrion.hommunity_api.api.service.SvcFamilia;
 import com.syrion.hommunity_api.common.dto.ApiResponse;
 import com.syrion.hommunity_api.exception.ApiException;
@@ -39,14 +39,14 @@ public class FamiliaController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('Administrador', 'Residente')")
     @Operation(summary = "Obtener familia por ID", description = "Permite obtener los detalles de una familia específica por su ID.")
-    public ResponseEntity<DtoFamiliaOut> obtenerFamiliaPorId(@Valid @PathVariable Long id) {
-        return svcFamilia.obtenerFamiliaPorId(id);
+    public ResponseEntity<Familia> obtenerFamiliaPorId(@Valid @PathVariable("id") Long id) {
+        return svcFamilia.getFamiliaPorId(id);
     }
     
     @GetMapping("/zona/{idZona}")
     @Operation(summary = "Obtener familias por zona", description = "Permite obtener una lista de familias que pertenecen a una zona específica.")
-    public ResponseEntity<List<DtoFamiliaOut>> obtenerFamiliasPorZona(@Valid @PathVariable Long idZona) {
-        return svcFamilia.obtenerFamiliasPorZona(idZona);
+    public ResponseEntity<List<Familia>> obtenerFamiliasPorZona(@Valid @PathVariable("idZona") Long idZona) {
+        return svcFamilia.getFamiliasPorZona(idZona);
     }
 
     @PostMapping
@@ -58,26 +58,24 @@ public class FamiliaController {
             String errorMessage = fieldError != null ? fieldError.getDefaultMessage() : "Validation error";
             throw new ApiException(HttpStatus.BAD_REQUEST, errorMessage);
         }
-
-        return svcFamilia.crearFamilia(familiaIn);
+        return svcFamilia.createFamilia(familiaIn);
     }
     
-    @PatchMapping("{idFamilia}/registrador")
+    @PatchMapping("{id}/registrador")
     @Operation(summary = "Actualizar usuario registrador", description = "Permite actualizar el usuario registrador de una familia por su ID.")
-    public ResponseEntity<ApiResponse> updateUsuarioRegistrador(@Valid @PathVariable("idFamilia") Long idFamilia, @Valid @RequestBody DtoUsuarioRegistradorIn in, BindingResult bindingResult) {
+    public ResponseEntity<ApiResponse> updateUsuarioRegistrador(@Valid @PathVariable("id") Long idFamilia, @Valid @RequestBody DtoUsuarioRegistradorIn in, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             FieldError fieldError = bindingResult.getFieldError();
             String errorMessage = fieldError != null ? fieldError.getDefaultMessage() : "Validation error";
             throw new ApiException(HttpStatus.BAD_REQUEST, errorMessage);
         }
-
         return svcFamilia.updateUsuarioRegistrador(idFamilia, in);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('Administrador', 'Residente')")
     @Operation(summary = "Eliminar familia", description = "Permite eliminar una familia del sistema por su ID.")
-    public ResponseEntity<ApiResponse> deleteFamilia(@Valid @PathVariable Long id) {
-        return svcFamilia.eliminarFamilia(id);
+    public ResponseEntity<ApiResponse> deleteFamilia(@Valid @PathVariable("id") Long id) {
+        return svcFamilia.deleteFamilia(id);
     }
 }

@@ -1,14 +1,10 @@
 package com.syrion.hommunity_api.api.entity;
 
-import com.syrion.hommunity_api.api.enums.EstadoUsuario;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -41,20 +37,17 @@ public class Usuario {
     private String contraseña;
 
     @Column(name = "estado")
-    private EstadoUsuario estado;
+    private String estado;
 
     @Column(name = "foto_identificacion")
     private String fotoIdentificacion;
 
-    @ManyToOne
-    @JoinColumn(name = "id_rol", referencedColumnName = "id_rol")
-    private Rol idRol;
+    @Column(name = "id_rol")
+    private Long idRol;
 
-    @ManyToOne
-    @JoinColumn(name = "id_zona", referencedColumnName = "id_zona")
-    private Zona idZona;
+    @Column(name = "id_zona")
+    private Long idZona;
 
-    @ManyToOne
-    @JoinColumn(name = "id_familia", referencedColumnName = "id_familia")
-    private Familia idFamilia;
+    @Column(name = "id_familia")
+    private Long idFamilia;
 }

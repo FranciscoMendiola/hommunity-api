@@ -1,6 +1,7 @@
 package com.syrion.hommunity_api.config.jwt;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,9 +66,18 @@ protected void doFilterInternal(HttpServletRequest request,
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("Invalid or expired token");
                 return;
-            }
-        } catch (Exception e) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "Invalid token: " + e.getMessage());
+            } 
+        }catch (Exception e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write(String.format(
+                "{\"timestamp\":\"%s\",\"status\":%d,\"error\":\"%s\",\"message\":\"%s\",\"path\":\"%s\"}",
+                LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.getReasonPhrase().toUpperCase(),
+                e.getMessage(),
+                request.getRequestURI()));
+            return;
         }
     } else {
         //No hay token, dejamos pasar (puede ser ruta pública)
