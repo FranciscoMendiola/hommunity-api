@@ -1,15 +1,14 @@
 package com.syrion.hommunity_api.api.entity;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,25 +22,30 @@ public class QR {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_qr")
+    @JsonProperty("idQr")
     private Long idQr;
 
     @Column(name = "codigo")
+    @JsonProperty("codigo")
     private String codigo;
 
-    @Column(name = "fecha_creacion")
+    @Column(name = "fecha_reacion")
+    @JsonProperty("fechaCreacion")
     private LocalDateTime fechaCreacion;
     
     @Column(name = "vigente")
+    @JsonProperty("vigente")
     private Boolean vigente;
     
     @Column(name = "usos_disponibles")
+    @JsonProperty("usosDisponibles")
     private Integer usosDisponibles;
 
-    @ManyToOne
-    @JoinColumn(name = "id_invitado", referencedColumnName = "id_invitado")
-    private Invitado idInvitado;
+    @Column(name = "id_invitado")
+    @JsonProperty("idInvitado")
+    private Long idInvitado;
     
-    @ManyToOne
-    @JoinColumn(name = "id_usuario", referencedColumnName = "id_usuario")
-    private Usuario idUsuario;
+    @Column(name = "id_usuario")
+    @JsonProperty("idUsuario")
+    private Long idUsuario;
 }

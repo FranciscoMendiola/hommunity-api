@@ -14,12 +14,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.syrion.hommunity_api.api.dto.in.DtoCasaIn;
-import com.syrion.hommunity_api.api.dto.out.DtoCasaOut;
+import com.syrion.hommunity_api.api.entity.Casa;
 import com.syrion.hommunity_api.api.service.SvcCasa;
 import com.syrion.hommunity_api.common.dto.ApiResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/casa")
@@ -32,29 +33,29 @@ public class CasaController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('Administrador', 'Residente')")
     @Operation(summary = "Obtener casa por ID", description = "Permite obtener los detalles de una casa específica por su ID.")
-    public ResponseEntity<DtoCasaOut> obtenerCasaPorId(@PathVariable Long id) {
-        return svcCasa.obtenerCasaPorId(id);
+    public ResponseEntity<Casa> obtenerCasaPorId(@Valid @PathVariable("id") Long id) {
+        return svcCasa.getCasaPorId(id);
     }
 
     @GetMapping("/zona/{idZona}")
     @PreAuthorize("hasAnyAuthority('Administrador', 'Residente')")
     @Operation(summary = "Obtener casas por zona", description = "Permite obtener una lista de casas que pertenecen a una zona específica.")
-    public ResponseEntity<List<DtoCasaOut>> obtenerCasasPorZona(@PathVariable Long idZona) {
-        return svcCasa.buscarPorZona(idZona);
+    public ResponseEntity<List<Casa>> obtenerCasasPorZona(@Valid @PathVariable("idZona") Long idZona) {
+        return svcCasa.getCasasPorZona(idZona);
     }
     
     @PostMapping
     @PreAuthorize("hasAnyAuthority('Administrador', 'Residente')")
     @Operation(summary = "Crear casa", description = "Permite crear una nueva casa en el sistema.")
-    public ResponseEntity<DtoCasaOut> crearCasa(@RequestBody DtoCasaIn casaIn) {
-        return svcCasa.crearCasa(casaIn);
+    public ResponseEntity<Casa> crearCasa(@Valid @RequestBody DtoCasaIn casaIn) {
+        return svcCasa.createCasa(casaIn);
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('Administrador', 'Residente')")
     @Operation(summary = "Eliminar casa", description = "Permite eliminar una casa del sistema por su ID.")
-    public ResponseEntity<ApiResponse> eliminarCasa(@PathVariable Long id) {
-        return svcCasa.eliminarCasa(id);
+    public ResponseEntity<ApiResponse> eliminarCasa(@Valid @PathVariable("id") Long id) {
+        return svcCasa.deleteCasa(id);
     }
     
 }

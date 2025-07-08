@@ -51,7 +51,7 @@ CREATE TABLE Usuario (
         (id_rol = 1 AND id_familia IS NOT NULL) OR
         (id_rol <> 1)
     ),
-    CHECK (estado IN ('pendiente', 'aprobado', 'rechazado'))
+    CHECK (estado IN tipo_acceso)
 );
 
 -- Tabla: Familia

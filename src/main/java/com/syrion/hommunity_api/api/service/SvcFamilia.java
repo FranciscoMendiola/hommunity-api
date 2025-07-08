@@ -6,14 +6,13 @@ import org.springframework.http.ResponseEntity;
 
 import com.syrion.hommunity_api.api.dto.in.DtoFamiliaIn;
 import com.syrion.hommunity_api.api.dto.in.DtoUsuarioRegistradorIn;
-import com.syrion.hommunity_api.api.dto.out.DtoFamiliaOut;
+import com.syrion.hommunity_api.api.entity.Familia;
 import com.syrion.hommunity_api.common.dto.ApiResponse;
 
 public interface SvcFamilia {
-    ResponseEntity<DtoFamiliaOut> obtenerFamiliaPorId(Long id);
-    ResponseEntity<List<DtoFamiliaOut>> obtenerFamiliasPorZona(Long idZona);
-    ResponseEntity<ApiResponse> crearFamilia(DtoFamiliaIn familiaIn);
-    ResponseEntity<ApiResponse> eliminarFamilia(Long idFamilia);
-
+    ResponseEntity<Familia> getFamiliaPorId(Long id);
+    ResponseEntity<List<Familia>> getFamiliasPorZona(Long idZona);
+    ResponseEntity<ApiResponse> createFamilia(DtoFamiliaIn familiaIn);
+    ResponseEntity<ApiResponse> deleteFamilia(Long idFamilia);
     ResponseEntity<ApiResponse> updateUsuarioRegistrador(Long idFamilia, DtoUsuarioRegistradorIn in);
 }

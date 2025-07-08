@@ -37,9 +37,9 @@ public class UsuarioController {
     SvcUsuario svUsuario;
 
     // Obtener usuario por ID
-    @GetMapping("/{idUsuario}")
+    @GetMapping("/{id}")
     @Operation(summary = "Obtener usuario por ID", description = "Permite obtener los detalles de un usuario específico por su ID.")
-    public ResponseEntity<DtoUsuarioOut> getUsuarioPorId(@Valid @PathVariable("idUsuario") Long idUsuario) {
+    public ResponseEntity<DtoUsuarioOut> getUsuarioPorId(@Valid @PathVariable("id") Long idUsuario) {
         return svUsuario.getUsuario(idUsuario);
     }
 
@@ -71,16 +71,16 @@ public class UsuarioController {
     }
 
     // Eliminar usuario
-    @DeleteMapping("/{idUsuario}/delete")
+    @DeleteMapping("/{id}/delete")
     @Operation(summary = "Eliminar usuario", description = "Permite eliminar un usuario del sistema por su ID.")
-    public ResponseEntity<ApiResponse> deleteUsuario(@Valid @PathVariable("idUsuario") Long idUsuario) {
+    public ResponseEntity<ApiResponse> deleteUsuario(@Valid @PathVariable("id") Long idUsuario) {
         return svUsuario.deleteUsuario(idUsuario);
     }
 
     // Actualizar estado de usuario
-    @PatchMapping("/{idUsuario}/estado")
+    @PatchMapping("/{id}/estado")
     @Operation(summary = "Actualizar estado de usuario", description = "Permite actualizar el estado de un usuario (aprobado/pendiente) por su ID.")
-    public ResponseEntity<ApiResponse> updateEstadoUsuario(@Valid @PathVariable("idUsuario") Long idUsuario, 
+    public ResponseEntity<ApiResponse> updateEstadoUsuario(@Valid @PathVariable("id") Long idUsuario, 
                                                             @Valid @RequestBody DtoEstadoUsuariIn in, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             FieldError fieldError = bindingResult.getFieldError();
@@ -92,9 +92,9 @@ public class UsuarioController {
     }
 
     // Actualizar contraseña de usuario
-    @PatchMapping("/{idUsuario}/contraseña")
+    @PatchMapping("/{id}/contraseña")
     @Operation(summary = "Actualizar contraseña de usuario", description = "Permite actualizar la contraseña de un usuario por su ID.")
-    public ResponseEntity<ApiResponse> updateContraseña(@Valid @PathVariable("idUsuario") Long idUsuario, 
+    public ResponseEntity<ApiResponse> updateContraseña(@Valid @PathVariable("id") Long idUsuario, 
                                                         @Valid @RequestBody DtoUsuarioContraseñaIn in, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             FieldError fieldError = bindingResult.getFieldError();

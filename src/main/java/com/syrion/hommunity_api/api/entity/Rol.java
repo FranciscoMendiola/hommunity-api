@@ -1,5 +1,7 @@
 package com.syrion.hommunity_api.api.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -18,9 +20,11 @@ public class Rol {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_rol")
+    @JsonProperty("idRol")
     private Long idRol;
 
     @Column(name = "nombre_rol")
+    @JsonProperty("nombre_rol")
     private String nombreRol;
 }
 

@@ -1,7 +1,5 @@
 package com.syrion.hommunity_api.api.service;
 
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,12 +10,8 @@ import org.springframework.stereotype.Service;
 
 import com.syrion.hommunity_api.api.dto.in.DtoFamiliaIn;
 import com.syrion.hommunity_api.api.dto.in.DtoUsuarioRegistradorIn;
-import com.syrion.hommunity_api.api.dto.out.DtoFamiliaOut;
-import com.syrion.hommunity_api.api.entity.Casa;
 import com.syrion.hommunity_api.api.entity.Familia;
 import com.syrion.hommunity_api.api.entity.Usuario;
-import com.syrion.hommunity_api.api.enums.EstadoUsuario;
-import com.syrion.hommunity_api.api.repository.CasaRepository;
 import com.syrion.hommunity_api.api.repository.FamiliaRepository;
 import com.syrion.hommunity_api.api.repository.UsuarioRepository;
 import com.syrion.hommunity_api.api.repository.ZonaRepository;
@@ -31,78 +25,79 @@ public class SvcFamiliaImp implements SvcFamilia {
 
     @Autowired
     private FamiliaRepository familiaRepository;
-
+    
     @Autowired
-    private CasaRepository casaRepository;
+    private ZonaRepository zonaRepository;
 
     @Autowired
     private UsuarioRepository usuarioRepository;
     
     @Autowired
-    private MapperFamilia mapperFamilia;
-
-    @Autowired
-    private ZonaRepository zonaRepository;
+    private MapperFamilia mapper;
 
     @Override
-    public ResponseEntity<ApiResponse> crearFamilia(DtoFamiliaIn familiaIn) {
-        Casa casa = casaRepository.findById(familiaIn.getIdCasa())
-                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Casa no encontrada con id: " + familiaIn.getIdCasa()));
-
-        Usuario usuario = usuarioRepository.findById(familiaIn.getIdUsuarioRegistrador())
-                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Usuario registrador no encontrado con id: " + familiaIn.getIdUsuarioRegistrador()));
-
-        Familia familia = new Familia();
-        familia.setApellido(familiaIn.getApellido());
-
+    public ResponseEntity<Familia> getFamiliaPorId(Long id) {
         try {
-            EstadoUsuario estado = EstadoUsuario.fromValor(familiaIn.getEstado());
-            familia.setEstado(estado);
-        } catch (IllegalArgumentException e) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "EstadoUsuario inválido: " + familiaIn.getEstado());
+            Familia familia = validateId(id);
+            
+            return new ResponseEntity<>(familia, HttpStatus.OK);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
         }
-
-        familia.setFotoIdentificacion(familiaIn.getFotoIdentificacion());
-        familia.setFechaRegistro(Timestamp.from(Instant.now()));
-        familia.setIdCasa(casa);
-        familia.setIdUsuarioRegistrador(usuario);
-
-        familiaRepository.save(familia);
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse("Familia creada exitosamente"));
-    }
-
-    @Override
-    public ResponseEntity<ApiResponse> eliminarFamilia(Long idFamilia) {
-        if (!familiaRepository.existsById(idFamilia)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse("Familia no encontrada con id: " + idFamilia));
-        }
-        familiaRepository.deleteById(idFamilia);
-        return ResponseEntity.ok(new ApiResponse("Familia eliminada exitosamente"));
-    }
-
-    public ResponseEntity<DtoFamiliaOut> obtenerFamiliaPorId(Long id) {
-        Familia familia = familiaRepository.findById(id)
-                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Familia no encontrada con id: " + id));
-        DtoFamiliaOut familiaOut = mapperFamilia.fromFamilia(familia);
-        return ResponseEntity.ok(familiaOut);
     }
     
     @Override
-    public ResponseEntity<List<DtoFamiliaOut>> obtenerFamiliasPorZona(Long idZona) {
+    public ResponseEntity<List<Familia>> getFamiliasPorZona(Long idZona) {
         try {
+            if (!zonaRepository.existsById(idZona))
+                throw new ApiException(HttpStatus.NOT_FOUND, "Zona no encontrada con id: " + idZona);
 
-            zonaRepository.findById(idZona)
-                    .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Zona no encontrada con id: " + idZona));
+            List<Familia> familias = familiaRepository.findByIdZona(idZona);
 
-            List<Familia> familias = familiaRepository.findByIdCasaIdZonaIdZona(idZona);
+            return new ResponseEntity<>(familias, HttpStatus.OK);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
+        }
+    }
 
-            List<DtoFamiliaOut> familiasOut = mapperFamilia.fromListDto(familias);
+    @Override
+    public ResponseEntity<ApiResponse> createFamilia(DtoFamiliaIn in) {
+        try {
+            Familia familia = mapper.fromDtoFamiliaInTo(in);
 
-            
-            return new ResponseEntity<>(familiasOut, HttpStatus.OK);
+            familiaRepository.save(familia);
+
+            return new ResponseEntity<>(new ApiResponse("Familia creada correctamente"), HttpStatus.CREATED);
+        } catch (DataAccessException e) {
+            // No debería ocurrir error por el mapper
+            if (e.getLocalizedMessage().contains("chk_familia_estado"))
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El el status (estado) de la familia ingresado no esta definido");
+
+            if (e.getLocalizedMessage().contains("ux_familia_usuario_registrador"))
+                throw new ApiException(HttpStatus.CONFLICT, "El id del usuario registrador ya esta asociado a una familia");
+
+            if (e.getLocalizedMessage().contains("ux_id_casa"))
+                throw new ApiException(HttpStatus.CONFLICT, "El id de la casa ya esta asociado a una familia");
+
+            if (e.getLocalizedMessage().contains("fk_familia_id_casa"))
+                throw new ApiException(HttpStatus.NOT_FOUND, "El id de la casa no esta registrado");
+
+            // Esta excepción nunca se arrojara por la validación del mapper
+            if (e.getLocalizedMessage().contains("fk_familia_id_usuario_registrador"))
+                throw new ApiException(HttpStatus.NOT_FOUND, "El id del usuario registrador no existe");
+
+            throw new DBAccessException(e);
+        }
+    }
+
+    @Override
+    public ResponseEntity<ApiResponse> deleteFamilia(Long idFamilia) {
+        try {
+            validateId(idFamilia);
+
+            familiaRepository.deleteById(idFamilia);
+
+            return new ResponseEntity<>(new ApiResponse("Familia eliminada correctamente"), HttpStatus.OK);
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }
@@ -113,15 +108,25 @@ public class SvcFamiliaImp implements SvcFamilia {
         try {
             Familia familia = validateId(idFamilia);
 
-            Usuario usuarioRegistrador = usuarioRepository.findById(in.getIdUsuarioRegistrador())
-                    .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Usuario no encontrado con id: " + in.getIdUsuarioRegistrador()));
+            Usuario usuario = usuarioRepository.findById(in.getIdUsuarioRegistrador()).orElse(null);
 
-            familia.setIdUsuarioRegistrador(usuarioRegistrador);
+            if (usuario == null)
+                throw new ApiException(HttpStatus.NOT_FOUND, "El id del usuario registrador no existe");
+
+            familia.setIdUsuarioRegistrador(in.getIdUsuarioRegistrador());
+            familia.setFotoIdentificacion(usuario.getFotoIdentificacion());
+
+            if (!familia.getEstado().toLowerCase().equals("aprobado"))
+                familia.setEstado("APROBADO");
 
             familiaRepository.save(familia);
 
             return new ResponseEntity<>(new ApiResponse("Usuario registrador actualizado correctamente"), HttpStatus.OK);
         } catch (DataAccessException e) {
+            // No ocurrirá darse por la verificación de arriba
+            if (e.getLocalizedMessage().contains("fk_familia_id_usuario_registrador"))
+                throw new ApiException(HttpStatus.NOT_FOUND, "El id del usuario registrador no existe");
+
             throw new DBAccessException(e);
         }
     }

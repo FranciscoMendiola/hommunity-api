@@ -1,39 +1,23 @@
 package com.syrion.hommunity_api.common.mapper;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.syrion.hommunity_api.api.entity.Usuario;
-import com.syrion.hommunity_api.api.enums.EstadoUsuario;
 import com.syrion.hommunity_api.api.dto.in.DtoUsuarioIn;
 import com.syrion.hommunity_api.api.dto.out.DtoUsuarioOut;
-import com.syrion.hommunity_api.api.entity.Rol;
+import com.syrion.hommunity_api.api.entity.Usuario;
+import com.syrion.hommunity_api.common.util.ConverterRol;
 
 @Service
 public class MapperUsuario {
 
-    public Usuario fromUsuario(DtoUsuarioIn in) {
-        Usuario usuario = new Usuario();
-        usuario.setNombre(in.getNombre());
-        usuario.setApellidoMaterno(in.getApellidoMaterno());
-        usuario.setApellidoPaterno(in.getApellidoPaterno());
-        usuario.setCorreo(in.getCorreo());
-        usuario.setContraseña(in.getContraseña());
-        usuario.setFotoIdentificacion(in.getFotoIdentificacion());
+    @Autowired
+    private ConverterRol converterRol;
 
-        usuario.setEstado(EstadoUsuario.PENDIENTE);
-        
-        Rol rol = new Rol();
-        rol.setIdRol(1L);
-        rol.setNombreRol("Residente");
-        usuario.setIdRol(rol);
-
-        return usuario;
-    }
-
-
-    public DtoUsuarioOut fromDtoUsuario(Usuario usuario) {
+    public DtoUsuarioOut fromUsuarioToDtoUsuarioOut(Usuario usuario) {
         DtoUsuarioOut out = new DtoUsuarioOut();
         
         out.setIdUsuario(usuario.getIdUsuario());
@@ -41,20 +25,39 @@ public class MapperUsuario {
         out.setApellidoMaterno(usuario.getApellidoMaterno());
         out.setApellidoPaterno(usuario.getApellidoPaterno());
         out.setCorreo(usuario.getCorreo());
-        out.setIdFamilia(usuario.getIdFamilia().getIdFamilia());
-        out.setIdZona(usuario.getIdZona().getIdZona());
+        out.setIdFamilia(usuario.getIdFamilia());
+        out.setIdZona(usuario.getIdZona());
         out.setEstado(usuario.getEstado());
         out.setFotoIdentificacion(usuario.getFotoIdentificacion());
-        out.setIdRol(usuario.getIdRol().getIdRol());
+        out.setIdRol(usuario.getIdRol());
 
         return out;
     }
 
-    public List<DtoUsuarioOut> fromListDto(List<Usuario> usuarios) {
-        List<DtoUsuarioOut> out = new java.util.ArrayList<>();
+    public Usuario fromDtoUsuarioInToUsuario(DtoUsuarioIn in) {
+        Usuario usuario = new Usuario();
+
+        usuario.setNombre(in.getNombre());
+        usuario.setApellidoPaterno(in.getApellidoPaterno());
+        usuario.setApellidoMaterno(in.getApellidoMaterno());
+        usuario.setCorreo(in.getCorreo());
+        usuario.setEstado("PENDIENTE");
+        usuario.setFotoIdentificacion(in.getFotoIdentificacion());
+        usuario.setIdFamilia(in.getIdFamilia());
+        usuario.setContraseña(in.getContraseña());
+
+        usuario.setIdRol(converterRol.getIdRol("RESIDENTE"));
+        usuario.setIdZona(in.getIdZona());
+
+        return usuario;
+    }
+
+    public List<DtoUsuarioOut> fromListUsuarioToDtoUsuarioOut(List<Usuario> usuarios) {
+        List<DtoUsuarioOut> out = new ArrayList<>();
         for (Usuario usuario : usuarios) {
-            out.add(fromDtoUsuario(usuario));
+            out.add(fromUsuarioToDtoUsuarioOut(usuario));
         }
+
         return out;
     }
 }

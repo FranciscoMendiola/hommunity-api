@@ -26,7 +26,7 @@ public class DtoUsuarioOut {
     private String correo;
     
     @JsonProperty("estado")
-    private EstadoUsuario estado;
+    private String estado;
 
     @JsonProperty("fotoIdentificacion")
     private String fotoIdentificacion;

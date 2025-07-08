@@ -35,8 +35,6 @@ CREATE TABLE usuario (
     estado varchar(20) NOT NULL,
     foto_identificacion text,
     
-    CONSTRAINT chk_usuario_contraseña CHECK (contraseña ~ '^(?=.*[A-Z])(?=.*[!@#$%^&*()_+{}\[\]:;<>,.?~\\\-=/|]).{8,}$'),
-    CONSTRAINT chk_usuario_correo CHECK (correo ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
     CONSTRAINT chk_usuario_estado CHECK (estado IN ('PENDIENTE', 'APROBADO')),
     CONSTRAINT ux_usuario_correo UNIQUE (correo)
 );
@@ -91,8 +89,9 @@ CREATE TABLE qr (
     constraint ux_qr_codigo unique (codigo),
     
     CONSTRAINT chk_qr_invitado_o_usuario CHECK (((id_invitado IS NOT NULL AND id_usuario IS NULL) OR
-         (id_invitado IS NULL AND id_usuario IS NOT NULL))
-    )
+         (id_invitado IS NULL AND id_usuario IS NOT NULL))),
+    constraint ux_qr_id_usuario UNIQUE (id_usuario),
+    constraint ux_qr_id_invitado UNIQUE (id_invitado)
 );
 
 -- acceso

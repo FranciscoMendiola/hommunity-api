@@ -13,10 +13,7 @@ import com.syrion.hommunity_api.api.dto.in.DtoEstadoUsuariIn;
 import com.syrion.hommunity_api.api.dto.in.DtoUsuarioContraseñaIn;
 import com.syrion.hommunity_api.api.dto.in.DtoUsuarioIn;
 import com.syrion.hommunity_api.api.dto.out.DtoUsuarioOut;
-import com.syrion.hommunity_api.api.entity.Familia;
 import com.syrion.hommunity_api.api.entity.Usuario;
-import com.syrion.hommunity_api.api.entity.Zona;
-import com.syrion.hommunity_api.api.enums.EstadoUsuario;
 import com.syrion.hommunity_api.api.repository.FamiliaRepository;
 import com.syrion.hommunity_api.api.repository.UsuarioRepository;
 import com.syrion.hommunity_api.api.repository.ZonaRepository;
@@ -25,7 +22,10 @@ import com.syrion.hommunity_api.common.mapper.MapperUsuario;
 import com.syrion.hommunity_api.exception.ApiException;
 import com.syrion.hommunity_api.exception.DBAccessException;
 
+import jakarta.transaction.Transactional;
+
 @Service
+@Transactional
 public class SvcUsuarioImp implements SvcUsuario {
 
     @Autowired
@@ -48,7 +48,7 @@ public class SvcUsuarioImp implements SvcUsuario {
         try {
             Usuario usuario = validateId(id);
 
-            DtoUsuarioOut usuarioOut = mapper.fromDtoUsuario(usuario);
+            DtoUsuarioOut usuarioOut = mapper.fromUsuarioToDtoUsuarioOut(usuario);
             return new ResponseEntity<>(usuarioOut, HttpStatus.OK);
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
@@ -58,23 +58,33 @@ public class SvcUsuarioImp implements SvcUsuario {
     @Override
     public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
         try {
-            Zona zona = zonaRepository.findById(in.getIdZona())
-                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Zona no encontrada con id: " + in.getIdZona()));
-    
-                
-            Familia familia = familiaRepository.findById(in.getIdFamilia())
-                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Familia no encontrada con id: " + in.getIdFamilia()));
-                
-            Usuario usuario = mapper.fromUsuario(in);
-            usuario.setIdZona(zona);
-            usuario.setIdFamilia(familia);
-
             in.setContraseña(passwordEncoder.encode(in.getContraseña()));
+            
+            Usuario usuario = mapper.fromDtoUsuarioInToUsuario(in);
             
             usuarioRepository.save(usuario);
 
+            System.err.println("Usuario guardado");
+
             return new ResponseEntity<>(new ApiResponse("Usuario creado correctamente"), HttpStatus.CREATED);
         } catch (DataAccessException e) {
+            // Esta excepción no ocurrirá por el mapper
+            if (e.getLocalizedMessage().contains("chk_usuario_estado"))
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El status (estado) del usuario no esta definido");
+
+            if (e.getLocalizedMessage().contains("ux_usuario_correo"))
+                throw new ApiException(HttpStatus.CONFLICT, "El correo ya esta registrado");
+
+            if (e.getLocalizedMessage().contains("fk_usuario_id_familia"))
+                throw new ApiException(HttpStatus.NOT_FOUND, "El id de la familia no esta registrado");
+
+            // Ocurrirá si el rol RESIDENTE no esta en base de datos
+            if (e.getLocalizedMessage().contains("fk_usuario_id_rol"))
+                throw new ApiException(HttpStatus.NOT_FOUND, "El id del rol no esta registrado");
+
+            if (e.getLocalizedMessage().contains("fk_usuario_id_zona"))
+                throw new ApiException(HttpStatus.NOT_FOUND, "El id de la zona no esta registrado");
+
             throw new DBAccessException(e);
         }
     }
@@ -82,9 +92,9 @@ public class SvcUsuarioImp implements SvcUsuario {
     @Override
     public ResponseEntity<ApiResponse> deleteUsuario(Long id) {
         try {
-            Usuario usuario = validateId(id);
+            validateId(id);
 
-            usuarioRepository.delete(usuario);
+            usuarioRepository.deleteById(id);
 
             return new ResponseEntity<>(new ApiResponse("Usuario eliminado correctamente"), HttpStatus.OK);
         } catch (DataAccessException e) {
@@ -95,12 +105,12 @@ public class SvcUsuarioImp implements SvcUsuario {
     @Override
     public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorZona(Long idZona) {
         try {
-            zonaRepository.findById(idZona)
-                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Zona no encontrada con id: " + idZona));
+            if (!zonaRepository.existsById(idZona))
+                throw new ApiException(HttpStatus.NOT_FOUND, "Zona no encontrada con id: " + idZona);
 
             List<Usuario> usuarios = usuarioRepository.findByIdZona(idZona);
 
-            List<DtoUsuarioOut> usuariosOut = mapper.fromListDto(usuarios);
+            List<DtoUsuarioOut> usuariosOut = mapper.fromListUsuarioToDtoUsuarioOut(usuarios);
 
             return new ResponseEntity<>(usuariosOut, HttpStatus.OK);
         } catch (DataAccessException e) {
@@ -111,12 +121,12 @@ public class SvcUsuarioImp implements SvcUsuario {
     @Override
     public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorFamilia(Long idFamilia) {
         try {
-            familiaRepository.findById(idFamilia)
-                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "Familia no encontrada con id: " + idFamilia));
+            if (!familiaRepository.existsById(idFamilia))
+                throw new ApiException(HttpStatus.NOT_FOUND, "Familia no encontrada con id: " + idFamilia);
 
             List<Usuario> usuarios = usuarioRepository.findByIdFamilia(idFamilia);
 
-            List<DtoUsuarioOut> usuariosOut = mapper.fromListDto(usuarios);
+            List<DtoUsuarioOut> usuariosOut = mapper.fromListUsuarioToDtoUsuarioOut(usuarios);
 
             return new ResponseEntity<>(usuariosOut, HttpStatus.OK);
         } catch (DataAccessException e) {
@@ -129,11 +139,11 @@ public class SvcUsuarioImp implements SvcUsuario {
         try {
             Usuario usuario = validateId(id);
 
-            if (in.getEstado().toLowerCase() != EstadoUsuario.APROBADO.getValor() || in.getEstado() != EstadoUsuario.PENDIENTE.getValor())
-                throw new ApiException(HttpStatus.BAD_REQUEST, "El estado del usuario no es valido");
+            if (in.getEstado().toLowerCase() != "aprobado" || in.getEstado() != "pendiente")
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El status (estado) del usuario no esta definido");
 
-            if (!in.getEstado().toLowerCase().equals(usuario.getEstado().getValor()))
-                usuario.setEstado(EstadoUsuario.valueOf(in.getEstado().toLowerCase()));
+            if (!in.getEstado().toLowerCase().equals(usuario.getEstado().toLowerCase()))
+                usuario.setEstado(in.getEstado());
 
             usuarioRepository.save(usuario);
 

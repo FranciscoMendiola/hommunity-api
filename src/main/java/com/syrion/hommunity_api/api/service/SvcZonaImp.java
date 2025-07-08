@@ -9,11 +9,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.syrion.hommunity_api.api.dto.in.DtoZonaIn;
-import com.syrion.hommunity_api.api.dto.out.DtoZonaOut;
 import com.syrion.hommunity_api.api.entity.Zona;
 import com.syrion.hommunity_api.api.repository.ZonaRepository;
 import com.syrion.hommunity_api.common.dto.ApiResponse;
 import com.syrion.hommunity_api.common.mapper.MapperZona;
+import com.syrion.hommunity_api.exception.ApiException;
 import com.syrion.hommunity_api.exception.DBAccessException;
 
 @Service
@@ -23,30 +23,28 @@ public class SvcZonaImp implements SvcZona {
     private ZonaRepository zonaRepository;
 
     @Autowired
-    private MapperZona mapperZona;
+    private MapperZona mapper;
 
     @Override
-    public ResponseEntity<ApiResponse> crearZona(DtoZonaIn dto) {
+    public ResponseEntity<ApiResponse> createZona(DtoZonaIn in) {
         try {
-            Zona zona = new Zona();
-            zona.setNombre(dto.getNombre());
-            zona.setCodigoPostal(dto.getCodigoPostal());
-            zona.setMunicipio(dto.getMunicipio());
-            zona.setColonia(dto.getColonia());
+            Zona zona = mapper.fromDtoZonaInToZona(in);
 
             zonaRepository.save(zona);
             return new ResponseEntity<>(new ApiResponse("Zona creada correctamente"), HttpStatus.CREATED);
         } catch (DataAccessException e) {
+            if (e.getLocalizedMessage().contains("ux_zona_municipio_cp_colonia_nombre"))
+                throw new ApiException(HttpStatus.CONFLICT, "La zona ya esta registrada");
+
             throw new DBAccessException(e);
         }
     }
 
     @Override
-    public ResponseEntity<List<DtoZonaOut>> obtenerZonas() {
+    public ResponseEntity<List<Zona>> getZonas() {
         try {
             List<Zona> zonas = zonaRepository.findAll();
-            List<DtoZonaOut> dtoZonas = mapperZona.fromZonaList(zonas);
-            return new ResponseEntity<>(dtoZonas, HttpStatus.OK);
+            return new ResponseEntity<>(zonas, HttpStatus.OK);
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }

@@ -17,16 +17,6 @@ public class DtoFamiliaIn {
     @NotBlank(message = "El apellido no puede estar en blanco")
     private String apellido;
 
-    @JsonProperty("estado")
-    @NotNull(message = "El estado es obligatorio")
-    @NotBlank(message = "El estado no puede estar en blanco")
-    private String estado;
-
-    @JsonProperty("fotoIdentificacion")
-    @NotNull(message = "La foto de identificación es obligatoria")
-    @NotBlank(message = "La foto de identificación no puede estar en blanco")
-    private String fotoIdentificacion;
-
     @JsonProperty("idCasa")
     @NotNull(message = "La casa es obligatoria")
     private Long idCasa;

@@ -26,6 +26,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf().disable()
+            .exceptionHandling(exception -> exception
+            .authenticationEntryPoint(new CustomAuthEntryPoint()))
             .authorizeHttpRequests(auth -> auth
                 // Rutas públicas
                 .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
@@ -34,33 +36,33 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/usuario").permitAll()
 
                 // Rutas protegidas (solo con roles específicos)
-                .requestMatchers(HttpMethod.GET, "/usuario/**").hasAnyAuthority("Administrador", "Residente")
+                .requestMatchers(HttpMethod.GET, "/usuario/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
 
                 // Zona
-                .requestMatchers(HttpMethod.POST, "/zona/**").hasAuthority("Administrador")
+                .requestMatchers(HttpMethod.POST, "/zona/**").hasAuthority("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.GET, "/zona/**").permitAll()
 
                 // Invitado
-                .requestMatchers(HttpMethod.GET, "/invitado/**").hasAnyAuthority("Residente", "Administrador")
-                .requestMatchers(HttpMethod.POST, "/invitado").hasAnyAuthority("Residente", "Administrador")
-                .requestMatchers(HttpMethod.PATCH, "/invitado/**").hasAuthority("Administrador")
+                .requestMatchers(HttpMethod.GET, "/invitado/**").hasAnyAuthority("RESIDENTE", "ADMINISTRADOR")
+                .requestMatchers(HttpMethod.POST, "/invitado").hasAnyAuthority("RESIDENTE", "ADMINISTRADOR")
+                .requestMatchers(HttpMethod.PATCH, "/invitado/**").hasAuthority("ADMINISTRADOR")
 
 
                 // Rutas de casa
-                .requestMatchers(HttpMethod.POST, "/casa/**").hasAnyAuthority("Administrador")
+                .requestMatchers(HttpMethod.POST, "/casa/**").hasAnyAuthority("ADMINISTRADOR")
 
-                .requestMatchers(HttpMethod.DELETE, "/casa/**").hasAnyAuthority("Administrador", "Residente")
+                .requestMatchers(HttpMethod.DELETE, "/casa/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
 
                 // Rutas de familia
-                .requestMatchers(HttpMethod.POST, "/familia/**").hasAnyAuthority("Administrador", "Residente")
+                .requestMatchers(HttpMethod.POST, "/familia/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
 
-                .requestMatchers(HttpMethod.DELETE, "/familia/**").hasAnyAuthority("Administrador", "Residente")
+                .requestMatchers(HttpMethod.DELETE, "/familia/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
 
                 // Familias por zona
                 .requestMatchers(HttpMethod.GET, "/familia/zona/**").permitAll()
 
                 // Rutas de QR
-                .requestMatchers(HttpMethod.POST, "/qr/residente").hasAnyAuthority("Residente")
+                .requestMatchers(HttpMethod.POST, "/qr/residente").hasAnyAuthority("RESIDENTE")
 
                 // Todo lo demás requiere autenticación
                 .anyRequest().authenticated()

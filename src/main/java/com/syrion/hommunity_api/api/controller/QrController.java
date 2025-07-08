@@ -47,7 +47,7 @@ public class QrController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener código QR por ID", description = "Permite obtener los detalles de un código QR específico por su ID.")
-    public ResponseEntity<QR> getCodigo(@Valid @PathVariable Long id) {
+    public ResponseEntity<QR> getCodigo(@Valid @PathVariable("id") Long id) {
         return svc.getCodigo(id);   
     }
 
@@ -61,7 +61,7 @@ public class QrController {
 
     @PostMapping("/{id}/validate")
     @Operation(summary = "Validar código QR", description = "Permite validar y usar (por única vez) un código QR por su ID.")
-    public ResponseEntity<ApiResponse> validar(@Valid @PathVariable Long id) {
+    public ResponseEntity<ApiResponse> validar(@Valid @PathVariable("id") Long id) {
         return svc.validar(id);
     }
 
