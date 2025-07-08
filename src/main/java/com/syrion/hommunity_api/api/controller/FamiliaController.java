@@ -58,7 +58,6 @@ public class FamiliaController {
             String errorMessage = fieldError != null ? fieldError.getDefaultMessage() : "Validation error";
             throw new ApiException(HttpStatus.BAD_REQUEST, errorMessage);
         }
-
         return svcFamilia.createFamilia(familiaIn);
     }
     
@@ -70,7 +69,6 @@ public class FamiliaController {
             String errorMessage = fieldError != null ? fieldError.getDefaultMessage() : "Validation error";
             throw new ApiException(HttpStatus.BAD_REQUEST, errorMessage);
         }
-
         return svcFamilia.updateUsuarioRegistrador(idFamilia, in);
     }
 

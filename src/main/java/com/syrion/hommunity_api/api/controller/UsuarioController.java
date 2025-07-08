@@ -66,7 +66,6 @@ public class UsuarioController {
             String errorMessage = fieldError != null ? fieldError.getDefaultMessage() : "Validation error";
             throw new ApiException(HttpStatus.BAD_REQUEST, errorMessage);
         }
-
         return svUsuario.createUsuario(in);
     }
 
@@ -101,7 +100,7 @@ public class UsuarioController {
             String errorMessage = fieldError != null ? fieldError.getDefaultMessage() : "Validation error";
             throw new ApiException(HttpStatus.BAD_REQUEST, errorMessage);
         }
-        
+
         return svUsuario.updateContraseña(idUsuario, in);
     }
 }

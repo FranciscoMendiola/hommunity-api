@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -54,8 +55,11 @@ public class QrController {
     @PostMapping("/invitado")
     @Operation(summary = "Crear código QR", description = "Permite crear un nuevo código QR en el sistema.")
     public ResponseEntity<ApiResponse> createCodigoInvitado(@Valid @RequestBody DtoQrInvitadoIn in, BindingResult bindingResult) {
-		if (bindingResult.hasErrors())
-			throw new ApiException(HttpStatus.BAD_REQUEST, bindingResult.getFieldError().getDefaultMessage());
+        if (bindingResult.hasErrors()) {
+            FieldError fieldError = bindingResult.getFieldError();
+            String errorMessage = fieldError != null ? fieldError.getDefaultMessage() : "Validation error";
+            throw new ApiException(HttpStatus.BAD_REQUEST, errorMessage);
+        }
         return svc.createCodigoInvitado(in);
     }
 
@@ -68,8 +72,11 @@ public class QrController {
     @PostMapping("/residente")
     @Operation(summary = "Crear código QR para residente", description = "Permite crear un código QR para un residente con vigencia de acceso prolongada.")
     public ResponseEntity<ApiResponse> createCodigoResidente(@Valid @RequestBody DtoQrResidenteIn in, BindingResult bindingResult) {
-        if (bindingResult.hasErrors())
-            throw new ApiException(HttpStatus.BAD_REQUEST, bindingResult.getFieldError().getDefaultMessage());
+        if (bindingResult.hasErrors()) {
+            FieldError fieldError = bindingResult.getFieldError();
+            String errorMessage = fieldError != null ? fieldError.getDefaultMessage() : "Validation error";
+            throw new ApiException(HttpStatus.BAD_REQUEST, errorMessage);
+        }
         return svc.createCodigoResidente(in);
     }
 }
