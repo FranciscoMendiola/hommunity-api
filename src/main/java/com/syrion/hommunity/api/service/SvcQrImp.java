@@ -56,6 +56,22 @@ public class SvcQrImp implements SvcQr {
     }
 
     @Override
+    public ResponseEntity<String> getCodigoUsuario(Long idUsuario) {
+        try {
+            String codigo = qrRepository.findCodigoByIdUsuarioAndIdInvitadoIsNull(idUsuario);
+
+            if (codigo == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok(codigo);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
+        }
+    }
+
+
+    @Override
     public ResponseEntity<List<QR>> getCodigosActivos() {
         try {
             List<QR> qrs = qrRepository.findByActiveStatus();
@@ -187,4 +203,5 @@ public class SvcQrImp implements SvcQr {
 
         return qr;
     }
+
 }

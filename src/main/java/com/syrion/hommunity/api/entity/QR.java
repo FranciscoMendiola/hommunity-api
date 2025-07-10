@@ -29,7 +29,7 @@ public class QR {
     @JsonProperty("codigo")
     private String codigo;
 
-    @Column(name = "fecha_reacion")
+    @Column(name = "fecha_creacion")
     @JsonProperty("fechaCreacion")
     private LocalDateTime fechaCreacion;
     

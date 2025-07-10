@@ -17,5 +17,5 @@ public interface SvcQr {
     public ResponseEntity<ApiResponse> createCodigoInvitado(DtoQrInvitadoIn in);
     public ResponseEntity<ApiResponse> createCodigoResidente(DtoQrResidenteIn in);
     public ResponseEntity<ApiResponse> validar(Long id);
-
+    public ResponseEntity<String> getCodigoUsuario(Long idUsuario);
 }
