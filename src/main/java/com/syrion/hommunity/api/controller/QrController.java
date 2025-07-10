@@ -33,7 +33,6 @@ public class QrController {
     @Autowired
     private SvcQr svc;
 
-    
     @GetMapping
     @Operation(summary = "Obtener lista de códigos QR", description = "Permite obtener una lista de todos los códigos QR registrados en el sistema.")
     public ResponseEntity<List<QR>> getCodigos() {
@@ -50,6 +49,12 @@ public class QrController {
     @Operation(summary = "Obtener código QR por ID", description = "Permite obtener los detalles de un código QR específico por su ID.")
     public ResponseEntity<QR> getCodigo(@Valid @PathVariable("id") Long id) {
         return svc.getCodigo(id);   
+    }
+
+    @GetMapping("/invitado/{idInvitado}/codigo")
+    @Operation(summary = "Obtener código QR por idInvitado", description = "Obtiene el código QR registrado para un invitado.")
+    public ResponseEntity<String> getCodigoQrPorInvitado(@PathVariable Long idInvitado) {
+        return svc.getCodigoQrPorInvitado(idInvitado);
     }
 
     @PostMapping("/invitado")
@@ -80,3 +85,4 @@ public class QrController {
         return svc.createCodigoResidente(in);
     }
 }
+
