@@ -51,7 +51,7 @@ public class QrController {
         return svc.getCodigo(id);   
     }
 
-    @GetMapping("/invitado/{idInvitado}/codigo")
+    @GetMapping("/invitado/{idInvitado}")
     @Operation(summary = "Obtener código QR por idInvitado", description = "Obtiene el código QR registrado para un invitado.")
     public ResponseEntity<String> getCodigoQrPorInvitado(@PathVariable Long idInvitado) {
         return svc.getCodigoQrPorInvitado(idInvitado);
