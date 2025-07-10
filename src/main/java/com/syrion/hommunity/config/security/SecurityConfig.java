@@ -60,6 +60,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/qr/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
                         .requestMatchers(HttpMethod.POST, "/qr/invitado").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
                         .requestMatchers(HttpMethod.POST, "/qr/**").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.POST, "/qr/residente/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
 
                         // Usuario
                         .requestMatchers(HttpMethod.POST, "/usuario").permitAll() // Ruta pública

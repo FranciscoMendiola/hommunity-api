@@ -11,11 +11,13 @@ import com.syrion.hommunity.common.dto.ApiResponse;
 
 public interface SvcQr {
 
-    ResponseEntity<QR> getCodigo(Long id);
-    ResponseEntity<List<QR>> getCodigos();
-    ResponseEntity<List<QR>> getCodigosActivos();
-    ResponseEntity<ApiResponse> createCodigoInvitado(DtoQrInvitadoIn in);
-    ResponseEntity<ApiResponse> createCodigoResidente(DtoQrResidenteIn in);
-    ResponseEntity<ApiResponse> validar(Long id);
-    ResponseEntity<String> getCodigoQrPorInvitado(Long idInvitado);
+    public ResponseEntity<QR> getCodigo(Long id);
+    public ResponseEntity<List<QR>> getCodigos();
+    public ResponseEntity<List<QR>> getCodigosActivos();
+    public ResponseEntity<ApiResponse> createCodigoInvitado(DtoQrInvitadoIn in);
+    public ResponseEntity<ApiResponse> createCodigoResidente(DtoQrResidenteIn in);
+    public ResponseEntity<ApiResponse> validar(Long id);
+    public ResponseEntity<String> getCodigoUsuario(Long idUsuario);
+    public ResponseEntity<String> getCodigoQrPorInvitado(Long idInvitado);
+
 }

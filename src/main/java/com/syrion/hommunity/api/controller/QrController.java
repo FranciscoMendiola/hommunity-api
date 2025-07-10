@@ -84,5 +84,12 @@ public class QrController {
         }
         return svc.createCodigoResidente(in);
     }
+
+    @GetMapping("/residente/{idUsuario}")
+    @Operation(summary = "Obtener código QR de residente", description = "Devuelve solo el valor del código QR asignado a un usuario residente.")
+    public ResponseEntity<String> getCodigoDeResidente(@PathVariable Long idUsuario) {
+        return svc.getCodigoUsuario(idUsuario);
+    }
+
 }
 
