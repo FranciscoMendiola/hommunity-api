@@ -17,7 +17,7 @@ public class MapperInvitado {
         invitado.setApellidoMaterno(in.getApellidoMaterno());
         invitado.setFechaEntrada(in.getFechaEntrada());
         invitado.setFechaSalida(in.getFechaSalida());
-
+        invitado.setIdUsuario(in.getIdUsuario()); // asegúrate que esto exista
         return invitado;
     }
 }
