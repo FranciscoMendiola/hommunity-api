@@ -204,4 +204,33 @@ public class SvcQrImp implements SvcQr {
         return qr;
     }
 
+    @Override
+    public ResponseEntity<String> getCodigoQrPorInvitado(Long idInvitado) {
+        try {
+            QR qr = qrRepository.findByIdInvitado(idInvitado);
+
+            if (qr == null)
+                throw new ApiException(HttpStatus.NOT_FOUND, "El invitado no tiene un QR registrado");
+
+            return new ResponseEntity<>(qr.getCodigo(), HttpStatus.OK);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
+        }
+    }
+  
+    @Override
+    public ResponseEntity<String> getCodigoUsuario(Long idUsuario) {
+        try {
+            String codigo = qrRepository.findCodigoByIdUsuarioAndIdInvitadoIsNull(idUsuario);
+
+            if (codigo == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok(codigo);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
+        }
+    }
+
 }

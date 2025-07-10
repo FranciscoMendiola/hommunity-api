@@ -33,12 +33,10 @@ public class DtoInvitadoIn {
 
     @JsonProperty("fechaEntrada")
     @NotNull(message = "La fecha de entrada es obligatoria")
-    @NotBlank(message = "La fecha de entrada no puede estar en blanco")
     private LocalDateTime fechaEntrada;
     
     @JsonProperty("fechaSalida")
     @NotNull(message = "La fecha de salida es obligatoria")
-    @NotBlank(message = "La fecha de salida no puede estar en blanco")
     private LocalDateTime fechaSalida;
 
     @JsonProperty("idUsuario")
