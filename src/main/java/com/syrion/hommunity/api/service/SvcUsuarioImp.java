@@ -10,6 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.syrion.hommunity.api.dto.in.DtoEstadoUsuariIn;
+import com.syrion.hommunity.api.dto.in.DtoQrResidenteIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioContraseñaIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioIn;
 import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
@@ -42,6 +43,9 @@ public class SvcUsuarioImp implements SvcUsuario {
 
     @Autowired
     private MapperUsuario mapper;
+
+    @Autowired
+    private SvcQr svcQr;
 
     @Override
     public ResponseEntity<DtoUsuarioOut> getUsuario(Long id) {
@@ -139,19 +143,28 @@ public class SvcUsuarioImp implements SvcUsuario {
         try {
             Usuario usuario = validateId(id);
 
-            if (in.getEstado().toLowerCase() != "aprobado" || in.getEstado() != "pendiente")
-                throw new ApiException(HttpStatus.BAD_REQUEST, "El status (estado) del usuario no esta definido");
+            if (!in.getEstado().equalsIgnoreCase("aprobado") && !in.getEstado().equalsIgnoreCase("pendiente"))
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El status (estado) del usuario no está definido");
 
-            if (!in.getEstado().toLowerCase().equals(usuario.getEstado().toLowerCase()))
+            if (!in.getEstado().equalsIgnoreCase(usuario.getEstado()))
                 usuario.setEstado(in.getEstado());
 
             usuarioRepository.save(usuario);
+
+            // Si el estado es aprobado, crear QR automáticamente
+            if (in.getEstado().equalsIgnoreCase("aprobado")) {
+                DtoQrResidenteIn qrIn = new DtoQrResidenteIn();
+                qrIn.setIdUsuario(id);
+                svcQr.createCodigoResidente(qrIn);
+            }
 
             return new ResponseEntity<>(new ApiResponse("Usuario actualizado correctamente"), HttpStatus.OK);
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }
     }
+
+
 
     @Override
     public ResponseEntity<ApiResponse> updateContraseña(Long id, DtoUsuarioContraseñaIn in) {
