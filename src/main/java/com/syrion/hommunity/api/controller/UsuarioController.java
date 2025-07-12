@@ -23,6 +23,11 @@ import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
 import com.syrion.hommunity.api.service.SvcUsuario;
 import com.syrion.hommunity.common.dto.ApiResponse;
 import com.syrion.hommunity.exception.ApiException;
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -57,10 +62,11 @@ public class UsuarioController {
         return svUsuario.getUsuariosPorFamilia(idFamilia);
     }
 
-    // Crear usuario
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Crear usuario", description = "Permite crear un nuevo usuario en el sistema.")
-    public ResponseEntity<ApiResponse> createUsuario(@Valid @RequestBody DtoUsuarioIn in, BindingResult bindingResult) {
+    public ResponseEntity<ApiResponse> createUsuario(
+            @Valid @ModelAttribute DtoUsuarioIn in,
+            BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             FieldError fieldError = bindingResult.getFieldError();
             String errorMessage = fieldError != null ? fieldError.getDefaultMessage() : "Validation error";
@@ -68,6 +74,7 @@ public class UsuarioController {
         }
         return svUsuario.createUsuario(in);
     }
+
 
     // Eliminar usuario
     @DeleteMapping("/{id}/delete")
@@ -103,4 +110,6 @@ public class UsuarioController {
 
         return svUsuario.updateContraseña(idUsuario, in);
     }
+
+    
 }

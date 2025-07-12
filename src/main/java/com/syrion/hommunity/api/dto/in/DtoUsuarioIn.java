@@ -1,5 +1,7 @@
 package com.syrion.hommunity.api.dto.in;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.validation.constraints.NotBlank;
@@ -47,8 +49,7 @@ public class DtoUsuarioIn{
 
     @JsonProperty("fotoIdentificacion")
     @NotNull(message = "La foto de identificación es obligatoria")
-    @NotBlank(message = "La foto de identificación no puede estar en blanco")
-    private String fotoIdentificacion;
+    private MultipartFile fotoIdentificacion;
 
     @JsonProperty("idZona")
     @NotNull(message = "La zona es obligatoria")

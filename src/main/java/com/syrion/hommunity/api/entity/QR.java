@@ -29,6 +29,10 @@ public class QR {
     @JsonProperty("codigo")
     private String codigo;
 
+    @Column(name = "foto_qr")
+    @JsonProperty("fotoQr")
+    private String fotoQr;
+    
     @Column(name = "fecha_creacion")
     @JsonProperty("fechaCreacion")
     private LocalDateTime fechaCreacion;
@@ -44,7 +48,7 @@ public class QR {
     @Column(name = "id_invitado")
     @JsonProperty("idInvitado")
     private Long idInvitado;
-    
+
     @Column(name = "id_usuario")
     @JsonProperty("idUsuario")
     private Long idUsuario;
