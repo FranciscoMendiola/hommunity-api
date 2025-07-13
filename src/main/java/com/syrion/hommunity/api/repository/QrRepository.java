@@ -4,17 +4,18 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.syrion.hommunity.api.entity.QR;
-import org.springframework.data.repository.query.Param;
 
 public interface QrRepository extends JpaRepository<QR, Long> {
 
-    @Query(value = "SELECT * FROM qr WHERE vigente = true", nativeQuery = true)
-    List<QR> findByActiveStatus();
+    @Query(value = "SELECT * FROM QR WHERE idUsuario = :idUsuario", nativeQuery = true)
+    QR findByIdUsuario(@Param("idUsuario") Long idUsuario);
 
-    @Query("SELECT q.codigo FROM QR q WHERE q.idUsuario = :idUsuario AND q.idInvitado IS NULL")
-    String findCodigoByIdUsuarioAndIdInvitadoIsNull(@Param("idUsuario") Long idUsuario);
+    @Query(value = "SELECT * FROM QR WHERE idInvitado = :idInvitado", nativeQuery = true)
+    QR findByIdInvitado(@Param("idInvitado") Long idInvitado);
 
-    QR findByIdInvitado(Long idInvitado);
+    @Query(value = "SELECT * FROM qr WHERE codigo = :codigo", nativeQuery = true)
+    QR findByCodigo(@Param("codigo") String codigo);
 }

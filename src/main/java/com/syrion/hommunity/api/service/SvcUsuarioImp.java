@@ -14,12 +14,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.syrion.hommunity.api.dto.in.DtoEstadoUsuariIn;
-import com.syrion.hommunity.api.dto.in.DtoQrResidenteIn;
+import com.syrion.hommunity.api.dto.in.DtoQrUsuarioIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioContraseñaIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioIn;
 import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
 import com.syrion.hommunity.api.entity.Usuario;
 import com.syrion.hommunity.api.repository.FamiliaRepository;
+import com.syrion.hommunity.api.repository.QrRepository;
 import com.syrion.hommunity.api.repository.UsuarioRepository;
 import com.syrion.hommunity.api.repository.ZonaRepository;
 import com.syrion.hommunity.common.dto.ApiResponse;
@@ -45,6 +46,8 @@ public class SvcUsuarioImp implements SvcUsuario {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private QrRepository qrRepository;
     
     @Autowired
     private MapperUsuario mapper;
@@ -189,9 +192,11 @@ public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
 
             // Si el estado es aprobado, crear QR automáticamente
             if (in.getEstado().equalsIgnoreCase("aprobado")) {
-                DtoQrResidenteIn qrIn = new DtoQrResidenteIn();
+                DtoQrUsuarioIn qrIn = new DtoQrUsuarioIn();
                 qrIn.setIdUsuario(id);
-                svcQr.createCodigoResidente(qrIn);
+                
+                if (qrRepository.findByIdUsuario(id) == null)
+                    svcQr.createCodigoUsuario(qrIn);
             }
 
             return new ResponseEntity<>(new ApiResponse("Usuario actualizado correctamente"), HttpStatus.OK);
@@ -199,8 +204,6 @@ public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
             throw new DBAccessException(e);
         }
     }
-
-
 
     @Override
     public ResponseEntity<ApiResponse> updateContraseña(Long id, DtoUsuarioContraseñaIn in) {

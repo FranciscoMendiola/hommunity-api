@@ -28,10 +28,6 @@ public class QR {
     @Column(name = "codigo")
     @JsonProperty("codigo")
     private String codigo;
-
-    @Column(name = "foto_qr")
-    @JsonProperty("fotoQr")
-    private String fotoQr;
     
     @Column(name = "fecha_creacion")
     @JsonProperty("fechaCreacion")
