@@ -44,6 +44,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/casa/**").hasAnyAuthority("ADMINISTRADOR")
 
                         // Rutas de familia
+                        .requestMatchers(HttpMethod.GET, "/familia/zona/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/familia/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
                         .requestMatchers(HttpMethod.POST, "/familia/**").hasAnyAuthority("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.PATCH, "/familia/**").hasAnyAuthority("ADMINISTRADOR")
@@ -70,7 +71,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/usuario/*/estado").hasAnyAuthority("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.PATCH, "/usuario/*/contraseña").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
                         // Zona
-                        .requestMatchers(HttpMethod.GET, "/zona/**").hasAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/zona/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/zona/**").hasAuthority("ADMINISTRADOR")
 
                         // Todo lo demás requiere autenticación

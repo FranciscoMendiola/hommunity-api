@@ -38,14 +38,14 @@ public class DtoUsuarioIn{
     )
     private String correo;
 
-    @JsonProperty("contraseña")
+    @JsonProperty("contrasena")
     @NotNull(message = "La contraseña es obligatoria")
     @NotBlank(message = "La contraseña no puede estar en blanco")
     @Pattern(
         regexp = "^(?=.*[A-Z])(?=.*[!@#$%^&*()_+{}\\[\\]:;<>,.?~\\\\\\-=\\/|]).{8,}$",
-        message = "La contraseña debe tener al menos 8 caracteres, incluir una mayúscula y un carácter especial"
+        message = "La contrasena debe tener al menos 8 caracteres, incluir una mayúscula y un carácter especial"
     )
-    private String contraseña;
+    private String contrasena;
 
     @JsonProperty("fotoIdentificacion")
     @NotNull(message = "La foto de identificación es obligatoria")

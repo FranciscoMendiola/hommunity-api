@@ -84,8 +84,8 @@ public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "El archivo no es una imagen válida.");
         }
 
-        // Encriptar la contraseña
-        in.setContraseña(passwordEncoder.encode(in.getContraseña()));
+        // Encriptar la contrasena
+        in.setContrasena(passwordEncoder.encode(in.getContrasena()));
 
         // Mapear y guardar para obtener ID
         Usuario usuario = mapper.fromDtoUsuarioInToUsuario(in);

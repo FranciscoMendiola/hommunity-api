@@ -43,7 +43,7 @@ public class MapperUsuario {
         usuario.setCorreo(in.getCorreo());
         usuario.setEstado("PENDIENTE");
         usuario.setIdFamilia(in.getIdFamilia());
-        usuario.setContraseña(in.getContraseña());
+        usuario.setContraseña(in.getContrasena());
 
         usuario.setIdRol(converterRol.getIdRol("RESIDENTE"));
         usuario.setIdZona(in.getIdZona());

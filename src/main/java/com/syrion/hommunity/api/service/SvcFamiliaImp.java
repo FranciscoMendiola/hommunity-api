@@ -52,7 +52,7 @@ public class SvcFamiliaImp implements SvcFamilia {
             if (!zonaRepository.existsById(idZona))
                 throw new ApiException(HttpStatus.NOT_FOUND, "Zona no encontrada con id: " + idZona);
 
-            List<Familia> familias = familiaRepository.findByIdZona(idZona);
+            List<Familia> familias = familiaRepository.findFamiliasByIdZona(idZona);
 
             return new ResponseEntity<>(familias, HttpStatus.OK);
         } catch (DataAccessException e) {
