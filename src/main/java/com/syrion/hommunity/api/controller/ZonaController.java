@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,5 +49,11 @@ public class ZonaController {
     @Operation(summary = "Listar zonas", description = "Permite obtener una lista de todas las zonas registradas en el sistema.")
     public ResponseEntity<List<Zona>> listarZonas() {
         return svcZona.getZonas();
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Obtener zona por ID", description = "Permite obtener los detalles de una zona específica por su ID.")
+    public ResponseEntity<Zona> obtenerZonaPorId(@PathVariable Long id) {
+        return svcZona.getZonaById(id);
     }
 }

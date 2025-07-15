@@ -49,4 +49,17 @@ public class SvcZonaImp implements SvcZona {
             throw new DBAccessException(e);
         }
     }
+
+    @Override
+    public ResponseEntity<Zona> getZonaById(Long id) {
+        try {
+            Zona zona = zonaRepository.findById(id)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Zona no encontrada con id: " + id));
+            return new ResponseEntity<>(zona, HttpStatus.OK);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
+        }
+    }
+
+    
 }
