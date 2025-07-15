@@ -42,7 +42,6 @@ public class MapperUsuario {
         usuario.setApellidoMaterno(in.getApellidoMaterno());
         usuario.setCorreo(in.getCorreo());
         usuario.setEstado("PENDIENTE");
-        usuario.setFotoIdentificacion(in.getFotoIdentificacion());
         usuario.setIdFamilia(in.getIdFamilia());
         usuario.setContraseña(in.getContraseña());
 

@@ -1,23 +1,29 @@
 package com.syrion.hommunity.api.service;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import com.google.zxing.WriterException;
 import com.syrion.hommunity.api.dto.in.DtoQrInvitadoIn;
-import com.syrion.hommunity.api.dto.in.DtoQrResidenteIn;
+import com.syrion.hommunity.api.dto.in.DtoQrUsuarioIn;
+import com.syrion.hommunity.api.dto.out.DtoQrInvitadoOut;
+import com.syrion.hommunity.api.dto.out.DtoQrUsuarioOut;
 import com.syrion.hommunity.api.entity.Invitado;
 import com.syrion.hommunity.api.entity.QR;
 import com.syrion.hommunity.api.repository.InvitadoRepository;
 import com.syrion.hommunity.api.repository.QrRepository;
 import com.syrion.hommunity.common.dto.ApiResponse;
 import com.syrion.hommunity.common.mapper.MapperQR;
+import com.syrion.hommunity.common.util.QrCodeGenerator;
 import com.syrion.hommunity.exception.ApiException;
 import com.syrion.hommunity.exception.DBAccessException;
 
@@ -26,45 +32,60 @@ public class SvcQrImp implements SvcQr {
 
     @Autowired
     private QrRepository qrRepository;
-    
+
     @Autowired
     private InvitadoRepository invitadoRepository;
-    
+
     @Autowired
     private MapperQR mapper;
-
+    
     @Override
-    public ResponseEntity <QR> getCodigo(Long id) {
+    public ResponseEntity<DtoQrInvitadoOut> getCodigoInvitado(Long id) {
         try {
-            QR qr = validateId(id);
+            QR qr = qrRepository.findByIdInvitado(id);
 
-            return new ResponseEntity<>(qr , HttpStatus.OK);
+            if (qr == null)
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El id de invitado indicado no esta asociado a ningún código Qr");
+
+            Invitado invitado = invitadoRepository.findById(qr.getIdInvitado()).orElse(null);
+            DtoQrInvitadoOut qrOut = mapper.fromQrToDtoQrInvitadoOut(qr, invitado);
+                
+            byte[] qrImageBytes = QrCodeGenerator.generateQrImageAsBytes(qr.getCodigo(), 300, 300);
+            
+            qrOut.setQrImageBytes(qrImageBytes);
+                
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.IMAGE_PNG);
+
+            return new ResponseEntity<>(qrOut, headers, HttpStatus.CREATED);
+        } catch (WriterException e) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "No se pudo codificar el contenido del QR.");
+        } catch (IOException e) {
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al generar la imagen del QR.");
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }
     }
 
     @Override
-    public ResponseEntity<List<QR>> getCodigos() {
+    public ResponseEntity<DtoQrUsuarioOut> getCodigoUsuario(Long idUsuario) {
         try {
-            List<QR> qrs = qrRepository.findAll();
+            QR qr = qrRepository.findByIdUsuario(idUsuario);
 
-            return new ResponseEntity<>(qrs, HttpStatus.OK);
-        } catch (DataAccessException e) {
-            throw new DBAccessException(e);
-        }
-    }
+            if (qr == null)
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El id de usuario indicado no esta asociado a ningún código Qr");
+            
+            byte[] qrImageBytes = QrCodeGenerator.generateQrImageAsBytes(qr.getCodigo(), 300, 300);
+            DtoQrUsuarioOut qrOut = mapper.fromQrToDtoQrUsuarioOut(qr);
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.IMAGE_PNG);
 
-    @Override
-    public ResponseEntity<String> getCodigoUsuario(Long idUsuario) {
-        try {
-            String codigo = qrRepository.findCodigoByIdUsuarioAndIdInvitadoIsNull(idUsuario);
-
-            if (codigo == null) {
-                return ResponseEntity.notFound().build();
-            }
-
-            return ResponseEntity.ok(codigo);
+            return new ResponseEntity<>(qrOut, headers, HttpStatus.CREATED);
+        } catch (WriterException e) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "No se pudo codificar el contenido del QR.");
+        } catch (IOException e) {
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al generar la imagen del QR.");
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }
@@ -72,18 +93,7 @@ public class SvcQrImp implements SvcQr {
 
 
     @Override
-    public ResponseEntity<List<QR>> getCodigosActivos() {
-        try {
-            List<QR> qrs = qrRepository.findByActiveStatus();
-
-            return new ResponseEntity<>(qrs, HttpStatus.OK);
-        } catch (DataAccessException e) {
-            throw new DBAccessException(e);
-        }
-    }
-
-    @Override
-    public ResponseEntity<ApiResponse> createCodigoInvitado(DtoQrInvitadoIn in) {
+    public ResponseEntity<DtoQrInvitadoOut> createCodigoInvitado(DtoQrInvitadoIn in) {
         try {
             Invitado invitado = invitadoRepository.findById(in.getIdInvitado())
                     .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "El invitado no está registrado."));
@@ -106,15 +116,31 @@ public class SvcQrImp implements SvcQr {
 
             QR qr = mapper.fromDtoQrInToQrInvitado(in);
 
+            DtoQrInvitadoOut qrOut = mapper.fromQrToDtoQrInvitadoOut(qr, invitado);
+                
+            byte[] qrImageBytes = QrCodeGenerator.generateQrImageAsBytes(qr.getCodigo(), 300, 300);
+            
+            qrOut.setQrImageBytes(qrImageBytes);
+                
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.IMAGE_PNG);
+
             qrRepository.save(qr);
 
-            return new ResponseEntity<>(new ApiResponse("Código QR registrado correctamente"), HttpStatus.CREATED);
+            return new ResponseEntity<>(qrOut, headers, HttpStatus.CREATED);
+        } catch (WriterException e) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "No se pudo codificar el contenido del QR.");
+        } catch (IOException e) {
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al generar la imagen del QR.");
         } catch (DataAccessException e) {
-            // Esta excepción no ocurrirá por la separación de generación de códigos en dos endpoints
+            // Esta excepción no ocurrirá por la separación de generación de códigos en dos
+            // endpoints
             if (e.getLocalizedMessage().contains("chk_qr_invitado_o_usuario"))
-                throw new ApiException(HttpStatus.BAD_REQUEST, "El qr solo debe contener solo el id de usuario, o de invitado");
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                        "El qr solo debe contener solo el id de usuario, o de invitado");
 
-            // Esta excepción puede llegar a ocurrir si no se maneja bien la generación de códigos
+            // Esta excepción puede llegar a ocurrir si no se maneja bien la generación de
+            // códigos
             if (e.getLocalizedMessage().contains("ux_qr_codigo"))
                 throw new ApiException(HttpStatus.CONFLICT, "El código ya esta registrado");
 
@@ -127,7 +153,7 @@ public class SvcQrImp implements SvcQr {
     }
 
     @Override
-    public ResponseEntity<ApiResponse> createCodigoResidente(DtoQrResidenteIn in) {
+    public ResponseEntity<ApiResponse> createCodigoUsuario(DtoQrUsuarioIn in) {
         try {
             QR qr = mapper.fromDtoQrInToQrResidente(in);
 
@@ -136,11 +162,14 @@ public class SvcQrImp implements SvcQr {
             return new ResponseEntity<>(new ApiResponse("Código QR para residente creado correctamente"),
                     HttpStatus.CREATED);
         } catch (DataAccessException e) {
-            // Esta excepción no ocurrirá por la separación de generación de códigos en dos endpoints
+            // Esta excepción no ocurrirá por la separación de generación de códigos en dos
+            // endpoints
             if (e.getLocalizedMessage().contains("chk_qr_invitado_o_usuario"))
-                throw new ApiException(HttpStatus.BAD_REQUEST, "El qr solo debe contener solo el id de usuario, o de invitado");
+                throw new ApiException(HttpStatus.BAD_REQUEST,
+                        "El qr solo debe contener solo el id de usuario, o de invitado");
 
-            // Esta excepción puede llegar a ocurrir si no se maneja bien la generación de códigos
+            // Esta excepción puede llegar a ocurrir si no se maneja bien la generación de
+            // códigos
             if (e.getLocalizedMessage().contains("ux_qr_codigo"))
                 throw new ApiException(HttpStatus.CONFLICT, "El código ya esta registrado");
 
@@ -158,37 +187,34 @@ public class SvcQrImp implements SvcQr {
     }
 
     @Override
-    public ResponseEntity<ApiResponse> validar(Long id) {
+    public ResponseEntity<ApiResponse> scanQr(String codigo) {
         try {
-            QR qr = validateId(id);
+            QR qr = qrRepository.findByCodigo(codigo);
 
-            if (!qr.getVigente())
-                throw new ApiException(HttpStatus.BAD_REQUEST, "El código QR ha expirado.");
-
-            if (qr.getIdUsuario() != null)
-                return new ResponseEntity<>(new ApiResponse("Código QR validado correctamente"), HttpStatus.OK);
-
-            if (qr.getIdInvitado() != null) {
-                Invitado invitado = invitadoRepository.findById(qr.getIdInvitado()).orElse(null);
-                LocalDate today = LocalDate.now();
-                LocalDate fechaSalida = invitado.getFechaSalida().toLocalDate();
-                if (fechaSalida.isBefore(today)) {
-                    qr.setVigente(false);
-                    qrRepository.save(qr);
-                    throw new ApiException(HttpStatus.BAD_REQUEST, "El código QR ha expirado.");
-                }
-
-                if (qr.getUsosDisponibles() < 1) {
-                    qr.setVigente(false);
-                    qrRepository.save(qr);
-                    throw new ApiException(HttpStatus.BAD_REQUEST, "El código QR ya no tiene usos. Debes generar uno nuevo.");
-                }                 
+            if (qr == null) {
+                throw new ApiException(HttpStatus.NOT_FOUND, "Código QR no encontrado.");
             }
-            
-            qr.setUsosDisponibles(qr.getUsosDisponibles() - 1);
+
+            // Validar vigencia
+            if (!qr.getVigente()) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El código QR ha expirado o ya no es válido.");
+            }
+
+            // Validar usos disponibles si es invitado
+            if (qr.getIdInvitado() != null) {
+                if (qr.getUsosDisponibles() <= 0) {
+                    qr.setVigente(false);
+                    qrRepository.save(qr);
+                    throw new ApiException(HttpStatus.BAD_REQUEST, "El código QR ya no tiene usos disponibles.");
+                }
+                qr.setUsosDisponibles(qr.getUsosDisponibles() - 1);
+            }
+
+            // Si es residente no descontamos usos, solo confirmamos vigencia
             qrRepository.save(qr);
 
-            return new ResponseEntity<>(new ApiResponse("Codigo QR validado correctamente"), HttpStatus.OK);
+            return new ResponseEntity<>(new ApiResponse("El código QR es válido."), HttpStatus.OK);
+
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }
@@ -202,19 +228,5 @@ public class SvcQrImp implements SvcQr {
             throw new ApiException(HttpStatus.NOT_FOUND, "El id del QR no esta registrado.");
 
         return qr;
-    }
-
-    @Override
-    public ResponseEntity<String> getCodigoQrPorInvitado(Long idInvitado) {
-        try {
-            QR qr = qrRepository.findByIdInvitado(idInvitado);
-
-            if (qr == null)
-                throw new ApiException(HttpStatus.NOT_FOUND, "El invitado no tiene un QR registrado");
-
-            return new ResponseEntity<>(qr.getCodigo(), HttpStatus.OK);
-        } catch (DataAccessException e) {
-            throw new DBAccessException(e);
-        }
     }
 }

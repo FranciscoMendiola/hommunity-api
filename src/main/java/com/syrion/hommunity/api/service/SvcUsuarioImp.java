@@ -1,21 +1,26 @@
 package com.syrion.hommunity.api.service;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.syrion.hommunity.api.dto.in.DtoEstadoUsuariIn;
-import com.syrion.hommunity.api.dto.in.DtoQrResidenteIn;
+import com.syrion.hommunity.api.dto.in.DtoQrUsuarioIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioContraseñaIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioIn;
 import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
 import com.syrion.hommunity.api.entity.Usuario;
 import com.syrion.hommunity.api.repository.FamiliaRepository;
+import com.syrion.hommunity.api.repository.QrRepository;
 import com.syrion.hommunity.api.repository.UsuarioRepository;
 import com.syrion.hommunity.api.repository.ZonaRepository;
 import com.syrion.hommunity.common.dto.ApiResponse;
@@ -42,11 +47,17 @@ public class SvcUsuarioImp implements SvcUsuario {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
+    private QrRepository qrRepository;
+    
+    @Autowired
     private MapperUsuario mapper;
-
+    
     @Autowired
     private SvcQr svcQr;
-
+    
+    @Value("${app.upload.dir}")
+	private String uploadDir;
+    
     @Override
     public ResponseEntity<DtoUsuarioOut> getUsuario(Long id) {
         try {
@@ -60,38 +71,66 @@ public class SvcUsuarioImp implements SvcUsuario {
     }
 
     @Override
-    public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
-        try {
-            in.setContraseña(passwordEncoder.encode(in.getContraseña()));
-            
-            Usuario usuario = mapper.fromDtoUsuarioInToUsuario(in);
-            
-            usuarioRepository.save(usuario);
+public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
+    try {
+        MultipartFile file = in.getFotoIdentificacion();
 
-            System.err.println("Usuario guardado");
-
-            return new ResponseEntity<>(new ApiResponse("Usuario creado correctamente"), HttpStatus.CREATED);
-        } catch (DataAccessException e) {
-            // Esta excepción no ocurrirá por el mapper
-            if (e.getLocalizedMessage().contains("chk_usuario_estado"))
-                throw new ApiException(HttpStatus.BAD_REQUEST, "El status (estado) del usuario no esta definido");
-
-            if (e.getLocalizedMessage().contains("ux_usuario_correo"))
-                throw new ApiException(HttpStatus.CONFLICT, "El correo ya esta registrado");
-
-            if (e.getLocalizedMessage().contains("fk_usuario_id_familia"))
-                throw new ApiException(HttpStatus.NOT_FOUND, "El id de la familia no esta registrado");
-
-            // Ocurrirá si el rol RESIDENTE no esta en base de datos
-            if (e.getLocalizedMessage().contains("fk_usuario_id_rol"))
-                throw new ApiException(HttpStatus.NOT_FOUND, "El id del rol no esta registrado");
-
-            if (e.getLocalizedMessage().contains("fk_usuario_id_zona"))
-                throw new ApiException(HttpStatus.NOT_FOUND, "El id de la zona no esta registrado");
-
-            throw new DBAccessException(e);
+        if (file.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "La imagen de identificación es obligatoria.");
         }
+
+        String contentType = file.getContentType();
+        if (contentType == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "El archivo no es una imagen válida.");
+        }
+
+        // Encriptar la contraseña
+        in.setContraseña(passwordEncoder.encode(in.getContraseña()));
+
+        // Mapear y guardar para obtener ID
+        Usuario usuario = mapper.fromDtoUsuarioInToUsuario(in);
+        usuarioRepository.save(usuario);
+
+        // Crear ruta: {uploadDir}/Identificaciones/usuario_<id>.ext
+        String extension = file.getOriginalFilename()
+                .substring(file.getOriginalFilename().lastIndexOf("."));
+        String fileName = "usuario_" + usuario.getIdUsuario() + extension;
+
+        File directory = new File(uploadDir, "Identificaciones");
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        File dest = new File(directory, fileName);
+        file.transferTo(dest);
+
+        // Guardar la ruta relativa (ajustable si quieres usar URL pública)
+        usuario.setFotoIdentificacion("uploads/Identificaciones/" + fileName);
+        usuarioRepository.save(usuario);
+
+        System.out.println("Imagen guardada en: " + dest.getAbsolutePath());
+
+        return new ResponseEntity<>(new ApiResponse("Usuario creado correctamente con imagen"), HttpStatus.CREATED);
+
+    } catch (IOException e) {
+        throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al guardar la imagen: " + e.getMessage());
+    } catch (DataAccessException e) {
+        if (e.getLocalizedMessage().contains("chk_usuario_estado"))
+            throw new ApiException(HttpStatus.BAD_REQUEST, "El status (estado) del usuario no está definido");
+        if (e.getLocalizedMessage().contains("ux_usuario_correo"))
+            throw new ApiException(HttpStatus.CONFLICT, "El correo ya está registrado");
+        if (e.getLocalizedMessage().contains("fk_usuario_id_familia"))
+            throw new ApiException(HttpStatus.NOT_FOUND, "El id de la familia no está registrado");
+        if (e.getLocalizedMessage().contains("fk_usuario_id_rol"))
+            throw new ApiException(HttpStatus.NOT_FOUND, "El id del rol no está registrado");
+        if (e.getLocalizedMessage().contains("fk_usuario_id_zona"))
+            throw new ApiException(HttpStatus.NOT_FOUND, "El id de la zona no está registrado");
+
+        throw new DBAccessException(e);
     }
+}
+
+
 
     @Override
     public ResponseEntity<ApiResponse> deleteUsuario(Long id) {
@@ -153,9 +192,11 @@ public class SvcUsuarioImp implements SvcUsuario {
 
             // Si el estado es aprobado, crear QR automáticamente
             if (in.getEstado().equalsIgnoreCase("aprobado")) {
-                DtoQrResidenteIn qrIn = new DtoQrResidenteIn();
+                DtoQrUsuarioIn qrIn = new DtoQrUsuarioIn();
                 qrIn.setIdUsuario(id);
-                svcQr.createCodigoResidente(qrIn);
+                
+                if (qrRepository.findByIdUsuario(id) == null)
+                    svcQr.createCodigoUsuario(qrIn);
             }
 
             return new ResponseEntity<>(new ApiResponse("Usuario actualizado correctamente"), HttpStatus.OK);
@@ -163,8 +204,6 @@ public class SvcUsuarioImp implements SvcUsuario {
             throw new DBAccessException(e);
         }
     }
-
-
 
     @Override
     public ResponseEntity<ApiResponse> updateContraseña(Long id, DtoUsuarioContraseñaIn in) {

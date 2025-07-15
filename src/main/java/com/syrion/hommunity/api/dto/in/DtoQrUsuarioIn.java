@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class DtoQrResidenteIn {
+public class DtoQrUsuarioIn {
 
     @JsonProperty("idUsuario")
     @NotNull(message = "El id del usuario residente es obligatorio")

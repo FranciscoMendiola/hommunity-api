@@ -1,6 +1,8 @@
 package com.syrion.hommunity.api.entity;
 import java.time.LocalDateTime;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
