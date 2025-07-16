@@ -19,4 +19,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
         @Query(value = "SELECT * FROM usuario WHERE id_familia = :idFamilia", nativeQuery = true)
         List<Usuario>findByIdFamilia(Long idFamilia);
+
+        @Query(value = "SELECT * FROM usuario WHERE estado = 'PENDIENTE' AND id_zona = :idZona", nativeQuery = true)
+        List<Usuario> findUsuariosPendientesPorZona(Long idZona);
 }

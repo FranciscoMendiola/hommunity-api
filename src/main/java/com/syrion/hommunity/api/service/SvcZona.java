@@ -11,4 +11,5 @@ import com.syrion.hommunity.common.dto.ApiResponse;
 public interface SvcZona {
     ResponseEntity<ApiResponse> createZona(DtoZonaIn dto);
     ResponseEntity<List<Zona>> getZonas();
+    ResponseEntity<Zona> getZonaById(Long id);
 }

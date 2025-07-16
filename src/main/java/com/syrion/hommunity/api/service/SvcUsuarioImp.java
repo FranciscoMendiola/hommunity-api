@@ -162,6 +162,17 @@ public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
     }
 
     @Override
+    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZona(Long idZona) {
+        try {
+            List<Usuario> usuarios = usuarioRepository.findUsuariosPendientesPorZona(idZona);
+            List<DtoUsuarioOut> usuariosOut = mapper.fromListUsuarioToDtoUsuarioOut(usuarios);
+            return new ResponseEntity<>(usuariosOut, HttpStatus.OK);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
+        }
+    }
+
+    @Override
     public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorFamilia(Long idFamilia) {
         try {
             if (!familiaRepository.existsById(idFamilia))
