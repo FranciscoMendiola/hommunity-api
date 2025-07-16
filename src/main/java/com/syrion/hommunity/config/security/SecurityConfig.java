@@ -67,9 +67,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/usuario").permitAll() // Ruta pública
                         .requestMatchers(HttpMethod.GET, "/usuario/zona/**").hasAnyAuthority("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.GET, "/usuario/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        .requestMatchers(HttpMethod.GET, "/usuario/estado/pendiente/{idZona}").hasAnyAuthority("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.POST, "/usuario/**").hasAnyAuthority("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.PATCH, "/usuario/*/estado").hasAnyAuthority("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.PATCH, "/usuario/*/contraseña").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+
                         // Zona
                         .requestMatchers(HttpMethod.GET, "/zona/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/zona/**").hasAuthority("ADMINISTRADOR")

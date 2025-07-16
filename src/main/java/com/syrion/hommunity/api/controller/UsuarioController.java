@@ -4,11 +4,13 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,11 +25,6 @@ import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
 import com.syrion.hommunity.api.service.SvcUsuario;
 import com.syrion.hommunity.common.dto.ApiResponse;
 import com.syrion.hommunity.exception.ApiException;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.multipart.MultipartFile;
-
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -61,6 +58,13 @@ public class UsuarioController {
     public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorFamilia(@Valid @PathVariable("idFamilia") Long idFamilia) {
         return svUsuario.getUsuariosPorFamilia(idFamilia);
     }
+
+    // Obtener usuarios por estado "PENDIENTE" por zona
+    @GetMapping("/estado/pendiente/{idZona}")
+    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZona(@PathVariable Long idZona) {
+        return svUsuario.getUsuariosPendientesPorZona(idZona);
+    }
+
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Crear usuario", description = "Permite crear un nuevo usuario en el sistema.")
@@ -110,6 +114,8 @@ public class UsuarioController {
 
         return svUsuario.updateContraseña(idUsuario, in);
     }
+
+
 
     
 }

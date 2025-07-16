@@ -9,7 +9,6 @@ import com.syrion.hommunity.api.dto.in.DtoUsuarioContraseñaIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioIn;
 import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
 import com.syrion.hommunity.common.dto.ApiResponse;
-import org.springframework.web.multipart.MultipartFile;
 
 public interface SvcUsuario {
 
@@ -17,8 +16,10 @@ public interface SvcUsuario {
     public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorZona(Long idZona);
     public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorFamilia(Long idFamilia);
     public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in);
+    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZona(Long idZona);
     public ResponseEntity<ApiResponse> deleteUsuario(Long id);
     public ResponseEntity<ApiResponse> updateEstadoUsuario(Long id, DtoEstadoUsuariIn in);
     public ResponseEntity<ApiResponse> updateContraseña(Long id, DtoUsuarioContraseñaIn in);
+    
     
 }
