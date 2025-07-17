@@ -2,6 +2,9 @@ package com.syrion.hommunity.api.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,64 +74,65 @@ public class SvcUsuarioImp implements SvcUsuario {
     }
 
     @Override
-public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
-    try {
-        MultipartFile file = in.getFotoIdentificacion();
+    public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
+        try {
+            MultipartFile file = in.getFotoIdentificacion();
 
-        if (file.isEmpty()) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "La imagen de identificación es obligatoria.");
+            if (file.isEmpty()) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "La imagen de identificación es obligatoria.");
+            }
+
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("image/")) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El archivo no es una imagen válida.");
+            }
+
+            // Encriptar la contraseña
+            in.setContrasena(passwordEncoder.encode(in.getContrasena()));
+
+            // Mapear y guardar usuario para obtener ID
+            Usuario usuario = mapper.fromDtoUsuarioInToUsuario(in);
+            usuario = usuarioRepository.save(usuario); // Aquí se genera el ID
+
+            // Obtener extensión del archivo original
+            String extension = file.getOriginalFilename()
+                    .substring(file.getOriginalFilename().lastIndexOf("."));
+            String fileName = "/img/usuario/usuario_" + usuario.getIdUsuario() + extension;
+
+            // Ruta: {uploadDir}/img/usuario/usuario_#.png
+            Path imagePath = Paths.get(uploadDir, fileName);
+            Files.createDirectories(imagePath.getParent());
+
+            // Guardar el archivo
+            file.transferTo(imagePath.toFile());
+
+            // Guardar la ruta en el usuario
+            usuario.setFotoIdentificacion(fileName);
+            usuarioRepository.save(usuario); // Actualizar con la ruta de imagen
+
+            return new ResponseEntity<>(
+                    new ApiResponse("Usuario creado correctamente con imagen"),
+                    HttpStatus.CREATED
+            );
+
+        } catch (IOException e) {
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al guardar la imagen: " + e.getMessage());
+        } catch (DataAccessException e) {
+            if (e.getLocalizedMessage().contains("chk_usuario_estado"))
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El status (estado) del usuario no está definido");
+            if (e.getLocalizedMessage().contains("ux_usuario_correo"))
+                throw new ApiException(HttpStatus.CONFLICT, "El correo ya está registrado");
+            if (e.getLocalizedMessage().contains("fk_usuario_id_familia"))
+                throw new ApiException(HttpStatus.NOT_FOUND, "El id de la familia no está registrado");
+            if (e.getLocalizedMessage().contains("fk_usuario_id_rol"))
+                throw new ApiException(HttpStatus.NOT_FOUND, "El id del rol no está registrado");
+            if (e.getLocalizedMessage().contains("fk_usuario_id_zona"))
+                throw new ApiException(HttpStatus.NOT_FOUND, "El id de la zona no está registrado");
+
+            throw new DBAccessException(e);
         }
-
-        String contentType = file.getContentType();
-        if (contentType == null) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "El archivo no es una imagen válida.");
-        }
-
-        // Encriptar la contrasena
-        in.setContrasena(passwordEncoder.encode(in.getContrasena()));
-
-        // Mapear y guardar para obtener ID
-        Usuario usuario = mapper.fromDtoUsuarioInToUsuario(in);
-        usuarioRepository.save(usuario);
-
-        // Crear ruta: {uploadDir}/Identificaciones/usuario_<id>.ext
-        String extension = file.getOriginalFilename()
-                .substring(file.getOriginalFilename().lastIndexOf("."));
-        String fileName = "usuario_" + usuario.getIdUsuario() + extension;
-
-        File directory = new File(uploadDir, "Identificaciones");
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
-
-        File dest = new File(directory, fileName);
-        file.transferTo(dest);
-
-        // Guardar la ruta relativa (ajustable si quieres usar URL pública)
-        usuario.setFotoIdentificacion("uploads/Identificaciones/" + fileName);
-        usuarioRepository.save(usuario);
-
-        System.out.println("Imagen guardada en: " + dest.getAbsolutePath());
-
-        return new ResponseEntity<>(new ApiResponse("Usuario creado correctamente con imagen"), HttpStatus.CREATED);
-
-    } catch (IOException e) {
-        throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al guardar la imagen: " + e.getMessage());
-    } catch (DataAccessException e) {
-        if (e.getLocalizedMessage().contains("chk_usuario_estado"))
-            throw new ApiException(HttpStatus.BAD_REQUEST, "El status (estado) del usuario no está definido");
-        if (e.getLocalizedMessage().contains("ux_usuario_correo"))
-            throw new ApiException(HttpStatus.CONFLICT, "El correo ya está registrado");
-        if (e.getLocalizedMessage().contains("fk_usuario_id_familia"))
-            throw new ApiException(HttpStatus.NOT_FOUND, "El id de la familia no está registrado");
-        if (e.getLocalizedMessage().contains("fk_usuario_id_rol"))
-            throw new ApiException(HttpStatus.NOT_FOUND, "El id del rol no está registrado");
-        if (e.getLocalizedMessage().contains("fk_usuario_id_zona"))
-            throw new ApiException(HttpStatus.NOT_FOUND, "El id de la zona no está registrado");
-
-        throw new DBAccessException(e);
     }
-}
+
 
 
 
@@ -164,7 +168,7 @@ public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
     @Override
     public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZona(Long idZona) {
         try {
-            List<Usuario> usuarios = usuarioRepository.findUsuariosPendientesPorZona(idZona);
+            List<Usuario> usuarios = usuarioRepository.findByFamiliaYEstadoPendiente(idZona);
             List<DtoUsuarioOut> usuariosOut = mapper.fromListUsuarioToDtoUsuarioOut(usuarios);
             return new ResponseEntity<>(usuariosOut, HttpStatus.OK);
         } catch (DataAccessException e) {

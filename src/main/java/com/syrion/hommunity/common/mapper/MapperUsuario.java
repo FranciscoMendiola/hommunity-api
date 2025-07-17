@@ -1,9 +1,15 @@
 package com.syrion.hommunity.common.mapper;
 
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.syrion.hommunity.api.dto.in.DtoUsuarioIn;
@@ -22,36 +28,51 @@ public class MapperUsuario {
     @Autowired
     private FamiliaRepository familiaRepository;
 
+    @Value("${app.upload.dir}")
+	private String uploadDir;
+
     /**
      * Convierte un Usuario a DtoUsuarioOut,
      * incluyendo el apellido de la familia si existe.
      */
     public DtoUsuarioOut fromUsuarioToDtoUsuarioOut(Usuario usuario) {
     DtoUsuarioOut out = new DtoUsuarioOut();
-    
-    out.setIdUsuario(usuario.getIdUsuario());
-    out.setNombre(usuario.getNombre());
-    out.setApellidoMaterno(usuario.getApellidoMaterno());
-    out.setApellidoPaterno(usuario.getApellidoPaterno());
-    out.setCorreo(usuario.getCorreo());
-    out.setIdFamilia(usuario.getIdFamilia());
-    out.setIdZona(usuario.getIdZona());
-    out.setEstado(usuario.getEstado());
-    out.setFotoIdentificacion(usuario.getFotoIdentificacion());
-    out.setIdRol(usuario.getIdRol());
+        
+        out.setIdUsuario(usuario.getIdUsuario());
+        out.setNombre(usuario.getNombre());
+        out.setApellidoMaterno(usuario.getApellidoMaterno());
+        out.setApellidoPaterno(usuario.getApellidoPaterno());
+        out.setCorreo(usuario.getCorreo());
+        out.setIdFamilia(usuario.getIdFamilia());
+        out.setIdZona(usuario.getIdZona());
+        out.setEstado(usuario.getEstado());
+        out.setIdRol(usuario.getIdRol());
 
-    String apellidoFamilia;
-    if (usuario.getIdFamilia() != null) {
-        apellidoFamilia = familiaRepository.findById(usuario.getIdFamilia())
-                .map(Familia::getApellido)
-                .orElse("Sin familia");
-    } else {
-        apellidoFamilia = "Sin familia"; // Valor por defecto para admins
+        String apellidoFamilia;
+        if (usuario.getIdFamilia() != null) {
+            apellidoFamilia = familiaRepository.findById(usuario.getIdFamilia())
+                    .map(Familia::getApellido)
+                    .orElse("Sin familia");
+        } else {
+            apellidoFamilia = "Sin familia"; // Valor por defecto para admins
+        }
+        out.setApellidoFamilia(apellidoFamilia);
+
+        System.err.println(uploadDir + usuario.getFotoIdentificacion());
+
+        // Cargar imagen desde URL y convertirla a base64
+        Path imagePath = Paths.get(uploadDir, usuario.getFotoIdentificacion());
+        try (InputStream inputStream = Files.newInputStream(imagePath)) {
+            byte[] imageBytes = inputStream.readAllBytes();
+            String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+            out.setFotoIdentificacion(base64Image);
+        }
+         catch (Exception e) {
+            System.out.println(e.getMessage());
+            out.setFotoIdentificacion(null);
+        }
+        return out;
     }
-    out.setApellidoFamilia(apellidoFamilia);
-
-    return out;
-}
 
     /**
      * Convierte un DtoUsuarioIn a Usuario al registrar.
