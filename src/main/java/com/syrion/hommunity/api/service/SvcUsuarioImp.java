@@ -1,6 +1,5 @@
 package com.syrion.hommunity.api.service;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -17,6 +16,7 @@ import com.syrion.hommunity.api.dto.in.DtoEstadoUsuariIn;
 import com.syrion.hommunity.api.dto.in.DtoQrUsuarioIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioContraseñaIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioIn;
+import com.syrion.hommunity.api.dto.out.DtoFamiliaPersonasOut;
 import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
 import com.syrion.hommunity.api.entity.Usuario;
 import com.syrion.hommunity.api.repository.FamiliaRepository;
@@ -171,6 +171,18 @@ public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
             throw new DBAccessException(e);
         }
     }
+
+    @Override
+    public ResponseEntity<List<DtoFamiliaPersonasOut>> getUsuariosAprobadosPorFamilia(Long idFamilia) {
+        try {
+            List<Usuario> usuarios = usuarioRepository.findByIdFamiliaAndEstado(idFamilia, "APROBADO");
+            List<DtoFamiliaPersonasOut> dtos = mapper.fromListUsuarioToDtoFamiliaPersonasOut(usuarios);
+            return ResponseEntity.ok(dtos);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
+        }
+    }
+
 
     @Override
     public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorFamilia(Long idFamilia) {

@@ -20,6 +20,18 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
         @Query(value = "SELECT * FROM usuario WHERE id_familia = :idFamilia", nativeQuery = true)
         List<Usuario>findByIdFamilia(Long idFamilia);
 
+<<<<<<< Updated upstream
         @Query(value = "SELECT * FROM usuario WHERE estado = 'PENDIENTE' AND id_zona = :idZona", nativeQuery = true)
         List<Usuario> findUsuariosPendientesPorZona(Long idZona);
+=======
+        @Query(value = """ 
+                SELECT u.* FROM usuario u JOIN familia f ON u.id_familia = f.id_familia
+                WHERE u.estado = 'PENDIENTE' AND u.id_zona = :idZona AND f.id_usuario_registrador IS NULL
+                """, nativeQuery = true)
+        List<Usuario> findByFamiliaYEstadoPendiente(@Param("idZona") Long idZona);
+
+        List<Usuario> findByIdFamiliaAndEstado(Long idFamilia, String estado);
+
+
+>>>>>>> Stashed changes
 }

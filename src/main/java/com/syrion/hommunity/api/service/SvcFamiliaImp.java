@@ -34,7 +34,7 @@ public class SvcFamiliaImp implements SvcFamilia {
     
     @Autowired
     private MapperFamilia mapper;
-
+    
     @Override
     public ResponseEntity<Familia> getFamiliaPorId(Long id) {
         try {

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.syrion.hommunity.api.dto.in.DtoUsuarioIn;
+import com.syrion.hommunity.api.dto.out.DtoFamiliaPersonasOut;
 import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
 import com.syrion.hommunity.api.entity.Familia;
 import com.syrion.hommunity.api.entity.Usuario;
@@ -82,4 +83,23 @@ public class MapperUsuario {
         }
         return out;
     }
+
+    public DtoFamiliaPersonasOut fromUsuarioToDtoFamiliaPersonasOut(Usuario usuario) {
+    DtoFamiliaPersonasOut out = new DtoFamiliaPersonasOut();
+    out.setIdUsuario(usuario.getIdUsuario());
+    out.setNombre(usuario.getNombre());
+    out.setApellidoPaterno(usuario.getApellidoPaterno());
+    out.setApellidoMaterno(usuario.getApellidoMaterno());
+    out.setCorreo(usuario.getCorreo());
+    return out;
+}
+
+    public List<DtoFamiliaPersonasOut> fromListUsuarioToDtoFamiliaPersonasOut(List<Usuario> usuarios) {
+        List<DtoFamiliaPersonasOut> outList = new ArrayList<>();
+        for (Usuario usuario : usuarios) {
+            outList.add(fromUsuarioToDtoFamiliaPersonasOut(usuario));
+        }
+        return outList;
+    }
+ 
 }
