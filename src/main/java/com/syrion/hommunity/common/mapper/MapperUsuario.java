@@ -29,30 +29,32 @@ public class MapperUsuario {
      */
     public DtoUsuarioOut fromUsuarioToDtoUsuarioOut(Usuario usuario) {
     DtoUsuarioOut out = new DtoUsuarioOut();
-    
-    out.setIdUsuario(usuario.getIdUsuario());
-    out.setNombre(usuario.getNombre());
-    out.setApellidoMaterno(usuario.getApellidoMaterno());
-    out.setApellidoPaterno(usuario.getApellidoPaterno());
-    out.setCorreo(usuario.getCorreo());
-    out.setIdFamilia(usuario.getIdFamilia());
-    out.setIdZona(usuario.getIdZona());
-    out.setEstado(usuario.getEstado());
-    out.setFotoIdentificacion(usuario.getFotoIdentificacion());
-    out.setIdRol(usuario.getIdRol());
+        
+        out.setIdUsuario(usuario.getIdUsuario());
+        out.setNombre(usuario.getNombre());
+        out.setApellidoMaterno(usuario.getApellidoMaterno());
+        out.setApellidoPaterno(usuario.getApellidoPaterno());
+        out.setCorreo(usuario.getCorreo());
+        out.setIdFamilia(usuario.getIdFamilia());
+        out.setIdZona(usuario.getIdZona());
+        out.setEstado(usuario.getEstado());
+        out.setIdRol(usuario.getIdRol());
+        out.setFotoIdentificacion(usuario.getFotoIdentificacion());
 
-    String apellidoFamilia;
-    if (usuario.getIdFamilia() != null) {
-        apellidoFamilia = familiaRepository.findById(usuario.getIdFamilia())
-                .map(Familia::getApellido)
-                .orElse("Sin familia");
-    } else {
-        apellidoFamilia = "Sin familia"; // Valor por defecto para admins
+        String apellidoFamilia;
+        if (usuario.getIdFamilia() != null) {
+            apellidoFamilia = familiaRepository.findById(usuario.getIdFamilia())
+                    .map(Familia::getApellido)
+                    .orElse("Sin familia");
+        } else {
+            apellidoFamilia = "Sin familia"; // Valor por defecto para admins
+        }
+        out.setApellidoFamilia(apellidoFamilia);
+
+        return out;
     }
-    out.setApellidoFamilia(apellidoFamilia);
 
-    return out;
-}
+
 
     /**
      * Convierte un DtoUsuarioIn a Usuario al registrar.

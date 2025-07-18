@@ -103,7 +103,7 @@ public class SvcFamiliaImp implements SvcFamilia {
         }
     }
 
-@Override
+    @Override
 public ResponseEntity<ApiResponse> updateUsuarioRegistrador(Long idFamilia, DtoUsuarioRegistradorIn in) {
     try {
         Familia familia = validateId(idFamilia);
@@ -113,20 +113,21 @@ public ResponseEntity<ApiResponse> updateUsuarioRegistrador(Long idFamilia, DtoU
         if (usuario == null)
             throw new ApiException(HttpStatus.NOT_FOUND, "El id del usuario registrador no existe");
 
+            
+            // Actualiza en familia
+        familia.setIdUsuarioRegistrador(in.getIdUsuarioRegistrador());
+        familia.setFotoIdentificacion(usuario.getFotoIdentificacion());
+        
+        if (!familia.getEstado().equalsIgnoreCase("APROBADO"))
+            familia.setEstado("APROBADO");
+        
         // Actualiza el estado del usuario a APROBADO si no lo está
         if (!usuario.getEstado().equalsIgnoreCase("APROBADO")) {
             usuario.setEstado("APROBADO");
-            usuarioRepository.save(usuario);
         }
-
-        // Actualiza en familia
-        familia.setIdUsuarioRegistrador(in.getIdUsuarioRegistrador());
-        familia.setFotoIdentificacion(usuario.getFotoIdentificacion());
-
-        if (!familia.getEstado().equalsIgnoreCase("APROBADO"))
-            familia.setEstado("APROBADO");
-
+        
         familiaRepository.save(familia);
+        usuarioRepository.save(usuario);
 
         return new ResponseEntity<>(new ApiResponse("Usuario registrador actualizado correctamente"), HttpStatus.OK);
     } catch (DataAccessException e) {
