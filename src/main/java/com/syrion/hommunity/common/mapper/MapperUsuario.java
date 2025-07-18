@@ -29,7 +29,7 @@ public class MapperUsuario {
      */
     public DtoUsuarioOut fromUsuarioToDtoUsuarioOut(Usuario usuario) {
     DtoUsuarioOut out = new DtoUsuarioOut();
-        
+
         out.setIdUsuario(usuario.getIdUsuario());
         out.setNombre(usuario.getNombre());
         out.setApellidoMaterno(usuario.getApellidoMaterno());
@@ -41,15 +41,15 @@ public class MapperUsuario {
         out.setIdRol(usuario.getIdRol());
         out.setFotoIdentificacion(usuario.getFotoIdentificacion());
 
-        String apellidoFamilia;
-        if (usuario.getIdFamilia() != null) {
-            apellidoFamilia = familiaRepository.findById(usuario.getIdFamilia())
-                    .map(Familia::getApellido)
-                    .orElse("Sin familia");
-        } else {
-            apellidoFamilia = "Sin familia"; // Valor por defecto para admins
-        }
-        out.setApellidoFamilia(apellidoFamilia);
+    String apellidoFamilia;
+    if (usuario.getIdFamilia() != null) {
+        apellidoFamilia = familiaRepository.findById(usuario.getIdFamilia())
+                .map(Familia::getApellido)
+                .orElse("Sin familia");
+    } else {
+        apellidoFamilia = "Sin familia"; // Valor por defecto para admins
+    }
+    out.setApellidoFamilia(apellidoFamilia);
 
         return out;
     }
@@ -103,5 +103,5 @@ public class MapperUsuario {
         }
         return outList;
     }
- 
+
 }
