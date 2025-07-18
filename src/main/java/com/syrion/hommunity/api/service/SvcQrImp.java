@@ -16,6 +16,7 @@ import com.google.zxing.WriterException;
 import com.syrion.hommunity.api.dto.in.DtoQrInvitadoIn;
 import com.syrion.hommunity.api.dto.in.DtoQrUsuarioIn;
 import com.syrion.hommunity.api.dto.out.DtoQrInvitadoOut;
+import com.syrion.hommunity.api.dto.out.DtoQrUsuarioCodigoOut;
 import com.syrion.hommunity.api.dto.out.DtoQrUsuarioOut;
 import com.syrion.hommunity.api.entity.Invitado;
 import com.syrion.hommunity.api.entity.QR;
@@ -229,4 +230,21 @@ public class SvcQrImp implements SvcQr {
 
         return qr;
     }
+
+    @Override
+public ResponseEntity<DtoQrUsuarioCodigoOut> getCodigoUsuarioSimple(Long idUsuario) {
+    try {
+        QR qr = qrRepository.findByIdUsuario(idUsuario);
+
+        if (qr == null) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "El id de usuario indicado no está asociado a ningún código QR");
+        }
+
+        DtoQrUsuarioCodigoOut codigoOut = new DtoQrUsuarioCodigoOut(qr.getCodigo());
+        return new ResponseEntity<>(codigoOut, HttpStatus.OK);
+
+    } catch (DataAccessException e) {
+        throw new DBAccessException(e);
+    }
+}
 }
