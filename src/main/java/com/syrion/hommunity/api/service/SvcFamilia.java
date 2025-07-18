@@ -12,7 +12,7 @@ import com.syrion.hommunity.common.dto.ApiResponse;
 public interface SvcFamilia {
     ResponseEntity<Familia> getFamiliaPorId(Long id);
     ResponseEntity<List<Familia>> getFamiliasPorZona(Long idZona);
-    ResponseEntity<ApiResponse> createFamilia(DtoFamiliaIn familiaIn);
+        ResponseEntity<ApiResponse> createFamilia(DtoFamiliaIn familiaIn);
     ResponseEntity<ApiResponse> deleteFamilia(Long idFamilia);
     ResponseEntity<ApiResponse> updateUsuarioRegistrador(Long idFamilia, DtoUsuarioRegistradorIn in);
 }

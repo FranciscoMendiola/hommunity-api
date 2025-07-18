@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.syrion.hommunity.api.dto.in.DtoEstadoUsuariIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioContraseñaIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioIn;
+import com.syrion.hommunity.api.dto.out.DtoFamiliaPersonasOut;
 import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
 import com.syrion.hommunity.api.service.SvcUsuario;
 import com.syrion.hommunity.common.dto.ApiResponse;
@@ -58,6 +59,13 @@ public class UsuarioController {
     public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorFamilia(@Valid @PathVariable("idFamilia") Long idFamilia) {
         return svUsuario.getUsuariosPorFamilia(idFamilia);
     }
+
+    @GetMapping("/familia/{idFamilia}/aprobados")
+    @Operation(summary = "Obtener usuarios aprobados por familia", description = "Permite obtener una lista de usuarios aprobados que pertenecen a una familia específica.")
+    public ResponseEntity<List<DtoFamiliaPersonasOut>> getUsuariosAprobadosPorFamilia(@PathVariable Long idFamilia) {
+        return svUsuario.getUsuariosAprobadosPorFamilia(idFamilia);
+    }
+
 
     // Obtener usuarios por estado "PENDIENTE" por zona
     @GetMapping("/estado/pendiente/{idZona}")

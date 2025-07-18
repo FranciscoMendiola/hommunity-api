@@ -1,6 +1,5 @@
 package com.syrion.hommunity.api.service;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,6 +19,7 @@ import com.syrion.hommunity.api.dto.in.DtoEstadoUsuariIn;
 import com.syrion.hommunity.api.dto.in.DtoQrUsuarioIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioContraseñaIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioIn;
+import com.syrion.hommunity.api.dto.out.DtoFamiliaPersonasOut;
 import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
 import com.syrion.hommunity.api.entity.Usuario;
 import com.syrion.hommunity.api.repository.FamiliaRepository;
@@ -97,7 +97,7 @@ public class SvcUsuarioImp implements SvcUsuario {
             // Obtener extensión del archivo original
             String extension = file.getOriginalFilename()
                     .substring(file.getOriginalFilename().lastIndexOf("."));
-            String fileName = "/img/usuario/usuario_" + usuario.getIdUsuario() + extension;
+            String fileName = "img/usuario/usuario_" + usuario.getIdUsuario() + extension;
 
             // Ruta: {uploadDir}/img/usuario/usuario_#.png
             Path imagePath = Paths.get(uploadDir, fileName);
@@ -107,7 +107,7 @@ public class SvcUsuarioImp implements SvcUsuario {
             file.transferTo(imagePath.toFile());
 
             // Guardar la ruta en el usuario
-            usuario.setFotoIdentificacion(fileName);
+            usuario.setFotoIdentificacion("uploads/" + fileName);
             usuarioRepository.save(usuario); // Actualizar con la ruta de imagen
 
             return new ResponseEntity<>(
@@ -132,8 +132,6 @@ public class SvcUsuarioImp implements SvcUsuario {
             throw new DBAccessException(e);
         }
     }
-
-
 
 
     @Override
@@ -168,13 +166,25 @@ public class SvcUsuarioImp implements SvcUsuario {
     @Override
     public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZona(Long idZona) {
         try {
-            List<Usuario> usuarios = usuarioRepository.findByFamiliaYEstadoPendiente(idZona);
+            List<Usuario> usuarios = usuarioRepository.findUsuariosPendientesPorZona(idZona);
             List<DtoUsuarioOut> usuariosOut = mapper.fromListUsuarioToDtoUsuarioOut(usuarios);
             return new ResponseEntity<>(usuariosOut, HttpStatus.OK);
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }
     }
+
+    @Override
+    public ResponseEntity<List<DtoFamiliaPersonasOut>> getUsuariosAprobadosPorFamilia(Long idFamilia) {
+        try {
+            List<Usuario> usuarios = usuarioRepository.findByIdFamiliaAndEstado(idFamilia, "APROBADO");
+            List<DtoFamiliaPersonasOut> dtos = mapper.fromListUsuarioToDtoFamiliaPersonasOut(usuarios);
+            return ResponseEntity.ok(dtos);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
+        }
+    }
+
 
     @Override
     public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorFamilia(Long idFamilia) {

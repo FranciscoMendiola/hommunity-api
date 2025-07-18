@@ -7,9 +7,9 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class DtoUsuarioOut {
+public class DtoFamiliaPersonasOut {
 
-    @JsonProperty("idUsuario")
+    @JsonProperty("idusuario")
     private Long idUsuario;
 
     @JsonProperty("nombre")
@@ -23,23 +23,5 @@ public class DtoUsuarioOut {
 
     @JsonProperty("correo")
     private String correo;
-    
-    @JsonProperty("estado")
-    private String estado;
-
-    @JsonProperty("fotoIdentificacion")
-    private String fotoIdentificacion;
-
-    @JsonProperty("idRol")
-    private Long idRol;
-
-    @JsonProperty("idZona")
-    private Long idZona;
-
-    @JsonProperty("idFamilia")
-    private Long idFamilia;
-
-    @JsonProperty("apellidoFamilia")
-    private String apellidoFamilia;
 
 }
