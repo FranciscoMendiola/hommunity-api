@@ -33,6 +33,7 @@ public class SecurityConfig {
 
                         // Auth
                         .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/uploads/**").hasAnyAuthority("ADMINISTRADOR")
 
                         // Rutas con token (Roles específicos)
                         // ===========================================================================================
