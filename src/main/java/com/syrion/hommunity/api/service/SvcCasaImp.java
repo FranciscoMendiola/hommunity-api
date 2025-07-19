@@ -64,7 +64,7 @@ public class SvcCasaImp implements SvcCasa {
             return new ResponseEntity<>(casa, HttpStatus.CREATED);
         } catch (DataAccessException e) {
             if (e.getLocalizedMessage().contains("ux_casa_id_zona_calle_numero"))
-                throw new ApiException(HttpStatus.CONFLICT, "La casa ya está registrado");
+                throw new ApiException(HttpStatus.CONFLICT, "La casa ya está registrada");
 
             if (e.getLocalizedMessage().contains("fk_casa_id_zona"))
                 throw new ApiException(HttpStatus.NOT_FOUND, "El id de la zona no esta registrado");
