@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.syrion.hommunity.api.entity.Usuario;
@@ -24,5 +25,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
         List<Usuario> findUsuariosPendientesPorZona(Long idZona);
 
         List<Usuario> findByIdFamiliaAndEstado(Long idFamilia, String estado);
+
+        @Query("SELECT u FROM Usuario u WHERE u.idFamilia = :idFamilia AND u.estado = 'APROBADO'")
+        List<Usuario> findUsuariosAprobadosPorFamilia(@Param("idFamilia") Long idFamilia);
 
 }
