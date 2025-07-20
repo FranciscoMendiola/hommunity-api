@@ -26,7 +26,6 @@ public class DtoUsuarioIn{
     private String apellidoPaterno;
 
     @JsonProperty("apellidoMaterno")
-    @NotBlank(message = "El apellido materno no puede estar en blanco")
     private String apellidoMaterno;
 
     @JsonProperty("correo")
