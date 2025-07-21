@@ -76,13 +76,12 @@ public class SvcQrImp implements SvcQr {
             if (qr == null)
                 throw new ApiException(HttpStatus.BAD_REQUEST, "El id de usuario indicado no esta asociado a ningún código Qr");
             
-            byte[] qrImageBytes = QrCodeGenerator.generateQrImageAsBytes(qr.getCodigo(), 300, 300);
+            byte[] qrImageBytes = QrCodeGenerator.generateQrImageAsBytes(qr.getCodigo(), 350, 350);
             DtoQrUsuarioOut qrOut = mapper.fromQrToDtoQrUsuarioOut(qr);
-            
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.IMAGE_PNG);
 
-            return new ResponseEntity<>(qrOut, headers, HttpStatus.CREATED);
+            qrOut.setQrImageBytes(qrImageBytes);
+
+            return new ResponseEntity<>(qrOut, HttpStatus.CREATED);
         } catch (WriterException e) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "No se pudo codificar el contenido del QR.");
         } catch (IOException e) {
