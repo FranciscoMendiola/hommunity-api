@@ -1,27 +1,25 @@
 package com.syrion.hommunity.api.service;
 
-import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-
 import com.syrion.hommunity.api.dto.in.DtoEstadoUsuariIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioContraseñaIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioIn;
 import com.syrion.hommunity.api.dto.out.DtoFamiliaPersonasOut;
 import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
 import com.syrion.hommunity.common.dto.ApiResponse;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import java.util.List;
 
 public interface SvcUsuario {
-
-    public ResponseEntity<DtoUsuarioOut> getUsuario(Long id);
-    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorZona(Long idZona);
-    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorFamilia(Long idFamilia);
-    public ResponseEntity<List<DtoFamiliaPersonasOut>> getUsuariosAprobadosPorFamilia(Long idFamilia);
-    public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in);
-    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZona(Long idZona);
-    public ResponseEntity<ApiResponse> deleteUsuario(Long id);
-    public ResponseEntity<ApiResponse> updateEstadoUsuario(Long id, DtoEstadoUsuariIn in);
-    public ResponseEntity<ApiResponse> updateContraseña(Long id, DtoUsuarioContraseñaIn in);
-    
-    
+    ResponseEntity<DtoUsuarioOut> getUsuario(Long idUsuario);
+    ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorZona(Long idZona);
+    ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorFamilia(Long idFamilia);
+    ResponseEntity<List<DtoFamiliaPersonasOut>> getUsuariosAprobadosPorFamilia(Long idFamilia);
+    ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZona(Long idZona);
+    ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZonaYRegistrador(Long idZona, Long idUsuarioRegistrador);
+    ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in);
+    ResponseEntity<ApiResponse> deleteUsuario(Long idUsuario);
+    ResponseEntity<ApiResponse> updateEstadoUsuario(Long idUsuario, DtoEstadoUsuariIn in, Authentication authentication);
+    ResponseEntity<ApiResponse> updateContraseña(Long idUsuario, DtoUsuarioContraseñaIn in);
+    boolean isRegistrador(String idUsuario);
 }

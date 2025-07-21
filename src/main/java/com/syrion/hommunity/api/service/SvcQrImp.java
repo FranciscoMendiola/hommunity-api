@@ -73,16 +73,22 @@ public class SvcQrImp implements SvcQr {
         try {
             QR qr = qrRepository.findByIdUsuario(idUsuario);
 
-            if (qr == null)
-                throw new ApiException(HttpStatus.BAD_REQUEST, "El id de usuario indicado no esta asociado a ningún código Qr");
-            
-            byte[] qrImageBytes = QrCodeGenerator.generateQrImageAsBytes(qr.getCodigo(), 300, 300);
-            DtoQrUsuarioOut qrOut = mapper.fromQrToDtoQrUsuarioOut(qr);
-            
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.IMAGE_PNG);
+            if (qr == null) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El id de usuario indicado no está asociado a ningún código QR");
+            }
 
-            return new ResponseEntity<>(qrOut, headers, HttpStatus.CREATED);
+            // Generar la imagen QR (opcional, solo si se necesita en bytes)
+            byte[] qrImageBytes = QrCodeGenerator.generateQrImageAsBytes(qr.getCodigo(), 300, 300);
+
+            // Mapear a DtoQrUsuarioOut con los datos
+            DtoQrUsuarioOut qrOut = mapper.fromQrToDtoQrUsuarioOut(qr);
+            qrOut.setQrImageBytes(qrImageBytes); // Incluir bytes de la imagen si es necesario
+
+            // Configurar headers para JSON (por defecto)
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON); // Cambiar a JSON
+
+            return new ResponseEntity<>(qrOut, headers, HttpStatus.OK);
         } catch (WriterException e) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "No se pudo codificar el contenido del QR.");
         } catch (IOException e) {

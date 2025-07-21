@@ -4,8 +4,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
@@ -21,6 +25,8 @@ import com.syrion.hommunity.api.dto.in.DtoUsuarioContraseñaIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioIn;
 import com.syrion.hommunity.api.dto.out.DtoFamiliaPersonasOut;
 import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
+import com.syrion.hommunity.api.entity.Familia;
+import com.syrion.hommunity.api.entity.QR;
 import com.syrion.hommunity.api.entity.Usuario;
 import com.syrion.hommunity.api.repository.FamiliaRepository;
 import com.syrion.hommunity.api.repository.QrRepository;
@@ -61,6 +67,19 @@ public class SvcUsuarioImp implements SvcUsuario {
     @Value("${app.upload.dir}")
 	private String uploadDir;
     
+    @Override
+    public boolean isRegistrador(String correo) {
+        System.out.println("Verificando si es registrador para correo: " + correo);
+        Usuario usuario = usuarioRepository.findByCorreo(correo);
+        if (usuario == null) {
+            System.out.println("Usuario no encontrado para correo: " + correo);
+            return false;
+        }
+        boolean isRegistrador = familiaRepository.existsByIdUsuarioRegistrador(usuario.getIdUsuario());
+        System.out.println("Es registrador: " + isRegistrador + ", idUsuario: " + usuario.getIdUsuario());
+        return isRegistrador;
+    }
+
     @Override
     public ResponseEntity<DtoUsuarioOut> getUsuario(Long id) {
         try {
@@ -166,7 +185,10 @@ public class SvcUsuarioImp implements SvcUsuario {
     @Override
     public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZona(Long idZona) {
         try {
-            List<Usuario> usuarios = usuarioRepository.findUsuariosPendientesPorZona(idZona);
+            if (!zonaRepository.existsById(idZona)) {
+                throw new ApiException(HttpStatus.NOT_FOUND, "Zona no encontrada con id: " + idZona);
+            }
+            List<Usuario> usuarios = usuarioRepository.findUsuariosPendientesPorZonaSinRegistrador(idZona);
             List<DtoUsuarioOut> usuariosOut = mapper.fromListUsuarioToDtoUsuarioOut(usuarios);
             return new ResponseEntity<>(usuariosOut, HttpStatus.OK);
         } catch (DataAccessException e) {
@@ -203,31 +225,70 @@ public class SvcUsuarioImp implements SvcUsuario {
     }
 
     @Override
-    public ResponseEntity<ApiResponse> updateEstadoUsuario(Long id, DtoEstadoUsuariIn in) {
-        try {
-            Usuario usuario = validateId(id);
+    public ResponseEntity<ApiResponse> updateEstadoUsuario(Long idUsuario, DtoEstadoUsuariIn in, Authentication authentication) {
+        System.out.println("Entrando a updateEstadoUsuario, idUsuario: " + idUsuario);
+        System.out.println("Authentication: " + (authentication != null ? authentication.getName() : "null"));
 
-            if (!in.getEstado().equalsIgnoreCase("aprobado") && !in.getEstado().equalsIgnoreCase("pendiente"))
-                throw new ApiException(HttpStatus.BAD_REQUEST, "El status (estado) del usuario no está definido");
-
-            if (!in.getEstado().equalsIgnoreCase(usuario.getEstado()))
-                usuario.setEstado(in.getEstado());
-
-            usuarioRepository.save(usuario);
-
-            // Si el estado es aprobado, crear QR automáticamente
-            if (in.getEstado().equalsIgnoreCase("aprobado")) {
-                DtoQrUsuarioIn qrIn = new DtoQrUsuarioIn();
-                qrIn.setIdUsuario(id);
-                
-                if (qrRepository.findByIdUsuario(id) == null)
-                    svcQr.createCodigoUsuario(qrIn);
-            }
-
-            return new ResponseEntity<>(new ApiResponse("Usuario actualizado correctamente"), HttpStatus.OK);
-        } catch (DataAccessException e) {
-            throw new DBAccessException(e);
+        // Verificar autenticación
+        if (authentication == null || !authentication.isAuthenticated()) {
+            System.out.println("Fallo en autenticación: token nulo o no autenticado");
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Token requerido o inválido");
         }
+
+        // Obtener usuario autenticado
+        String correo = authentication.getName();
+        System.out.println("Usuario autenticado correo: " + correo);
+        Usuario usuarioAutenticado = usuarioRepository.findByCorreo(correo);
+        if (usuarioAutenticado == null) {
+            System.out.println("Usuario no encontrado para correo: " + correo);
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado");
+        }
+
+        // Verificar que el usuario a actualizar existe y pertenece a la misma zona
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(idUsuario);
+        if (usuarioOpt.isEmpty()) {
+            System.out.println("Usuario no encontrado para idUsuario: " + idUsuario);
+            throw new ApiException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
+        }
+
+        Usuario usuario = usuarioOpt.get();
+        if (!usuario.getIdZona().equals(usuarioAutenticado.getIdZona())) {
+            System.out.println("Zona no coincide: usuario=" + usuario.getIdZona() + ", autenticado=" + usuarioAutenticado.getIdZona());
+            throw new ApiException(HttpStatus.FORBIDDEN, "No puedes actualizar usuarios de otra zona");
+        }
+
+        // Validar estado
+        String nuevoEstado = in.getEstado();
+        if (!nuevoEstado.equals("APROBADO") && !nuevoEstado.equals("PENDIENTE")) {
+            System.out.println("Estado inválido: " + nuevoEstado);
+            throw new ApiException(HttpStatus.BAD_REQUEST, "Estado inválido");
+        }
+
+        // Actualizar estado
+        usuario.setEstado(nuevoEstado);
+        usuarioRepository.save(usuario);
+        System.out.println("Estado actualizado para idUsuario: " + idUsuario + ", nuevo estado: " + nuevoEstado);
+
+        // Generar código QR si el estado es APROBADO
+        if (nuevoEstado.equals("APROBADO")) {
+            QR qrExistente = qrRepository.findByIdUsuario(idUsuario);
+            if (qrExistente == null) {
+                String codigoQr = UUID.randomUUID().toString();
+                QR qr = new QR();
+                qr.setIdUsuario(idUsuario);
+                qr.setCodigo(codigoQr);
+                qr.setFechaCreacion(LocalDateTime.now());
+                qr.setVigente(true);
+                qr.setUsosDisponibles(-1); // Ajusta según tus necesidades
+                qr.setIdInvitado(null); // No es un invitado
+                qrRepository.save(qr);
+                System.out.println("Código QR generado para idUsuario: " + idUsuario + ", código: " + codigoQr);
+            } else {
+                System.out.println("Código QR ya existe para idUsuario: " + idUsuario);
+            }
+        }
+
+        return ResponseEntity.ok(new ApiResponse("Estado actualizado correctamente"));
     }
 
     @Override
@@ -257,5 +318,21 @@ public class SvcUsuarioImp implements SvcUsuario {
             throw new ApiException(HttpStatus.NOT_FOUND, "El id del usuario no esta registrado.");
 
         return usuario;
+    }
+
+    @Override
+    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZonaYRegistrador(Long idZona, Long idUsuarioRegistrador) {
+        if (!zonaRepository.existsById(idZona)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Zona no encontrada con id: " + idZona);
+        }
+        if (!usuarioRepository.existsById(idUsuarioRegistrador)) {
+            throw new ApiException(HttpStatus.NOT_FOUND, "Usuario registrador no encontrado con id: " + idUsuarioRegistrador);
+        }
+        if (!familiaRepository.existsByIdUsuarioRegistrador(idUsuarioRegistrador)) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "El usuario no es registrador de ninguna familia en la zona: " + idZona);
+        }
+        List<Usuario> pendientes = usuarioRepository.findByIdZonaAndEstadoAndUsuarioRegistrador(idZona, "PENDIENTE", idUsuarioRegistrador);
+        List<DtoUsuarioOut> lista = mapper.fromListUsuarioToDtoUsuarioOut(pendientes);
+        return ResponseEntity.ok(lista);
     }
 }

@@ -29,14 +29,8 @@ public class SecurityConfig {
                         .authenticationEntryPoint(new CustomAuthEntryPoint()))
                 .authorizeHttpRequests(auth -> auth
                         // Rutas públicas
-                        // ===========================================================================================
-
-                        // Auth
                         .requestMatchers("/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/uploads/**").hasAnyAuthority("ADMINISTRADOR")
-
-                        // Rutas con token (Roles específicos)
-                        // ===========================================================================================
+                        .requestMatchers("/uploads/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE") // Permitir RESIDENTE
 
                         // Rutas de casa
                         .requestMatchers(HttpMethod.GET, "/casa/zona/**").hasAnyAuthority("ADMINISTRADOR")
@@ -64,41 +58,25 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/qr/**").hasAnyAuthority("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.POST, "/qr/residente/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
 
-                        // Usuario
-                        .requestMatchers(HttpMethod.POST, "/usuario").permitAll() // Ruta pública
-                        .requestMatchers(HttpMethod.GET, "/usuario/zona/**").hasAnyAuthority("ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.GET, "/usuario/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
-                        .requestMatchers(HttpMethod.GET, "/usuario/estado/pendiente/{idZona}").hasAnyAuthority("ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.POST, "/usuario/**").hasAnyAuthority("ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.PATCH, "/usuario/*/estado").hasAnyAuthority("ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.PATCH, "/usuario/*/contraseña").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
-
                         // Zona
                         .requestMatchers(HttpMethod.GET, "/zona/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/zona/**").hasAuthority("ADMINISTRADOR")
 
+                        // Usuario
+                        .requestMatchers(HttpMethod.POST, "/usuario").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/usuario/zona/**").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/usuario/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        .requestMatchers(HttpMethod.GET, "/usuario/estado/pendiente/{idZona}").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/usuario/estado/pendiente/{idZona}/registrador/{idUsuarioRegistrador}")
+                            .hasAnyAuthority("RESIDENTE")
+                        .requestMatchers(HttpMethod.PATCH, "/usuario/*/estado").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        .requestMatchers(HttpMethod.PATCH, "/usuario/*/contraseña").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        .requestMatchers(HttpMethod.POST, "/usuario/**").hasAnyAuthority("ADMINISTRADOR")
+
                         // Todo lo demás requiere autenticación
                         .anyRequest().authenticated()
-
-                // .requestMatchers(HttpMethod.GET, "/casa/**").hasAnyAuthority("ADMINISTRADOR",
-                // "RESIDENTE")
-                // .requestMatchers(HttpMethod.GET,
-                // "/familia/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
-                // .requestMatchers(HttpMethod.POST,
-                // "/invitado/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
-                // .requestMatchers(HttpMethod.GET,
-                // "/invitado/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
-                // .requestMatchers(HttpMethod.GET, "/qr/**").hasAnyAuthority("ADMINISTRADOR",
-                // "RESIDENTE")
-                // .requestMatchers(HttpMethod.PATCH,
-                // "/usuario/**/contraseña").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
-                // .requestMatchers(HttpMethod.GET,
-                // "/usuario/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE"))
-
-                // .anyRequest().hasAuthority("ADMINISTRADOR")
-
-                // Filtro JWT}
-                ).addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                )
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
