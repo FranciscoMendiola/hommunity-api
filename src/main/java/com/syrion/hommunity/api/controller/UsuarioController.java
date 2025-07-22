@@ -1,12 +1,13 @@
 package com.syrion.hommunity.api.controller;
 
 import java.util.List;
-import org.springframework.security.core.Authentication;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.syrion.hommunity.api.dto.in.DtoEstadoUsuariIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioContraseñaIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioIn;
@@ -26,6 +28,7 @@ import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
 import com.syrion.hommunity.api.service.SvcUsuario;
 import com.syrion.hommunity.common.dto.ApiResponse;
 import com.syrion.hommunity.exception.ApiException;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -65,11 +68,22 @@ public class UsuarioController {
         return svUsuario.getUsuariosAprobadosPorFamilia(idFamilia);
     }
 
-    // Obtener usuarios por estado "PENDIENTE" por zona
+    // Obtener usuarios por estado "PENDIENTE" por zona SIN registrador
     @GetMapping("/estado/pendiente/{idZona}")
+    @Operation(summary = "Obtener usuarios pendientes por zona",
+            description = "Permite obtener una lista de usuarios pendientes en una zona específica.")
     public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZona(@PathVariable Long idZona) {
-        return svUsuario.getUsuariosPendientesPorZona(idZona);
+        return svUsuario.getUsuariosPendientesAdmin(idZona);
     }
+
+    // Obtener usuarios "PENDIENTE" por zona CON registrador
+    @GetMapping("/estado/pendiente-con-registrador/{idZona}")
+    @Operation(summary = "Obtener usuarios pendientes por zona con registrador",
+            description = "Permite obtener usuarios pendientes en una zona donde las familias tienen usuario registrador asignado.")
+    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZonaConRegistrador(@PathVariable Long idZona) {
+        return svUsuario.getUsuariosPendientesResidente(idZona);
+    }
+
 
     @PreAuthorize("hasAuthority('RESIDENTE') and #idUsuarioRegistrador == authentication.principal")
     @GetMapping("/estado/pendiente/{idZona}/registrador/{idUsuarioRegistrador}")

@@ -193,12 +193,12 @@ public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
     }
 
     @Override
-    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZonaSinRegistrador(Long idZona) {
+    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesAdmin(Long idZona) {
         try {
             if (!zonaRepository.existsById(idZona)) {
                 throw new ApiException(HttpStatus.NOT_FOUND, "Zona no encontrada con id: " + idZona);
             }
-            List<Usuario> usuarios = usuarioRepository.findUsuariosPendientesPorZonaSinRegistrador(idZona);
+            List<Usuario> usuarios = usuarioRepository.findByFamiliaYEstadoPendiente(idZona);
             List<DtoUsuarioOut> usuariosOut = mapper.fromListUsuarioToDtoUsuarioOut(usuarios);
             return new ResponseEntity<>(usuariosOut, HttpStatus.OK);
         } catch (DataAccessException e) {
@@ -207,15 +207,16 @@ public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
     }
   
     @Override
-    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZona(Long idZona) {
+    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesResidente(Long idZona) {
         try {
-            List<Usuario> usuarios = usuarioRepository.findByFamiliaYEstadoPendiente(idZona);
+            List<Usuario> usuarios = usuarioRepository.findUsuariosPendientesPorZonaConRegistrador(idZona);
             List<DtoUsuarioOut> usuariosOut = mapper.fromListUsuarioToDtoUsuarioOut(usuarios);
             return new ResponseEntity<>(usuariosOut, HttpStatus.OK);
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }
     }
+
     
   
     @Override
