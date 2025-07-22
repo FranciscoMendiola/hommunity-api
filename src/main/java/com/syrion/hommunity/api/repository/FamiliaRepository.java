@@ -15,4 +15,6 @@ public interface FamiliaRepository extends JpaRepository<Familia, Long> {
     @Query("SELECT f FROM Familia f JOIN Casa c ON f.idCasa = c.idCasa WHERE c.idZona = :idZona")
     List<Familia> findFamiliasByIdZona(@Param("idZona") Long idZona);
 
+    boolean existsByIdUsuarioRegistrador(Long idUsuarioRegistrador);
+
 }

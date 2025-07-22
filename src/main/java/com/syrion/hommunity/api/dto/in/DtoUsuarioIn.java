@@ -56,4 +56,7 @@ public class DtoUsuarioIn{
     
     @JsonProperty("idFamilia")
     private Long idFamilia;
+
+    @JsonProperty("idUsuarioRegistrador")
+    private Long idUsuarioRegistrador;
 }
