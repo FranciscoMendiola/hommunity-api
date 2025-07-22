@@ -65,7 +65,7 @@ public class QrController {
     }
 
     // Endpoint que devuelve toda la info del QR (incluye imagen en bytes)
-    @GetMapping("/residente/{idUsuario}")
+    @GetMapping("/usuario/{idUsuario}")
     @Operation(summary = "Obtener código QR de residente", description = "Devuelve el objeto completo del código QR asignado a un usuario residente.")
     public ResponseEntity<DtoQrUsuarioOut> getCodigoUsuario(@PathVariable Long idUsuario) {
         return svc.getCodigoUsuario(idUsuario);

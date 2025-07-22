@@ -85,10 +85,10 @@ public class SvcQrImp implements SvcQr {
             qrOut.setQrImageBytes(qrImageBytes); // Incluir bytes de la imagen si es necesario
 
             // Configurar headers para JSON (por defecto)
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON); // Cambiar a JSON
+           // HttpHeaders headers = new HttpHeaders();
+           // headers.setContentType(MediaType.APPLICATION_JSON); // Cambiar a JSON
 
-            return new ResponseEntity<>(qrOut, headers, HttpStatus.OK);
+            return new ResponseEntity<>(qrOut, HttpStatus.OK);
         } catch (WriterException e) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "No se pudo codificar el contenido del QR.");
         } catch (IOException e) {
