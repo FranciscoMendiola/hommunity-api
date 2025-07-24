@@ -4,17 +4,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
-import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,7 +22,6 @@ import com.syrion.hommunity.api.dto.in.DtoUsuarioContraseñaIn;
 import com.syrion.hommunity.api.dto.in.DtoUsuarioIn;
 import com.syrion.hommunity.api.dto.out.DtoFamiliaPersonasOut;
 import com.syrion.hommunity.api.dto.out.DtoUsuarioOut;
-import com.syrion.hommunity.api.entity.Familia;
 import com.syrion.hommunity.api.entity.QR;
 import com.syrion.hommunity.api.entity.Usuario;
 import com.syrion.hommunity.api.repository.FamiliaRepository;
@@ -33,6 +29,7 @@ import com.syrion.hommunity.api.repository.QrRepository;
 import com.syrion.hommunity.api.repository.UsuarioRepository;
 import com.syrion.hommunity.api.repository.ZonaRepository;
 import com.syrion.hommunity.common.dto.ApiResponse;
+import com.syrion.hommunity.common.mapper.MapperQR;
 import com.syrion.hommunity.common.mapper.MapperUsuario;
 import com.syrion.hommunity.exception.ApiException;
 import com.syrion.hommunity.exception.DBAccessException;
@@ -63,6 +60,10 @@ public class SvcUsuarioImp implements SvcUsuario {
     
     @Autowired
     private SvcQr svcQr;
+
+    @Autowired
+    private MapperQR mapperQR;
+
     
     @Value("${app.upload.dir}")
 	private String uploadDir;
@@ -247,71 +248,29 @@ public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
         }
     }
 
-    @Override
+@Override
     public ResponseEntity<ApiResponse> updateEstadoUsuario(Long idUsuario, DtoEstadoUsuariIn in, Authentication authentication) {
-        System.out.println("Entrando a updateEstadoUsuario, idUsuario: " + idUsuario);
-        System.out.println("Authentication: " + (authentication != null ? authentication.getName() : "null"));
+        try {
+            Usuario usuario = validateId(idUsuario);
 
-        // Verificar autenticación
-        if (authentication == null || !authentication.isAuthenticated()) {
-            System.out.println("Fallo en autenticación: token nulo o no autenticado");
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Token requerido o inválido");
-        }
+            if (in.getEstado().equalsIgnoreCase("APROBADO") && !usuario.getEstado().equalsIgnoreCase("APROBADO")) {
+                usuario.setEstado("APROBADO");
 
-        // Obtener usuario autenticado
-        String correo = authentication.getName();
-        System.out.println("Usuario autenticado correo: " + correo);
-        Usuario usuarioAutenticado = usuarioRepository.findByCorreo(correo);
-        if (usuarioAutenticado == null) {
-            System.out.println("Usuario no encontrado para correo: " + correo);
-            throw new ApiException(HttpStatus.UNAUTHORIZED, "Usuario no encontrado");
-        }
+                DtoQrUsuarioIn qrIn =  new DtoQrUsuarioIn();
+                qrIn.setIdUsuario(usuario.getIdUsuario());
 
-        // Verificar que el usuario a actualizar existe y pertenece a la misma zona
-        Optional<Usuario> usuarioOpt = usuarioRepository.findById(idUsuario);
-        if (usuarioOpt.isEmpty()) {
-            System.out.println("Usuario no encontrado para idUsuario: " + idUsuario);
-            throw new ApiException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
-        }
-
-        Usuario usuario = usuarioOpt.get();
-        if (!usuario.getIdZona().equals(usuarioAutenticado.getIdZona())) {
-            System.out.println("Zona no coincide: usuario=" + usuario.getIdZona() + ", autenticado=" + usuarioAutenticado.getIdZona());
-            throw new ApiException(HttpStatus.FORBIDDEN, "No puedes actualizar usuarios de otra zona");
-        }
-
-        // Validar estado
-        String nuevoEstado = in.getEstado();
-        if (!nuevoEstado.equals("APROBADO") && !nuevoEstado.equals("PENDIENTE")) {
-            System.out.println("Estado inválido: " + nuevoEstado);
-            throw new ApiException(HttpStatus.BAD_REQUEST, "Estado inválido");
-        }
-
-        // Actualizar estado
-        usuario.setEstado(nuevoEstado);
-        usuarioRepository.save(usuario);
-        System.out.println("Estado actualizado para idUsuario: " + idUsuario + ", nuevo estado: " + nuevoEstado);
-
-        // Generar código QR si el estado es APROBADO
-        if (nuevoEstado.equals("APROBADO")) {
-            QR qrExistente = qrRepository.findByIdUsuario(idUsuario);
-            if (qrExistente == null) {
-                String codigoQr = UUID.randomUUID().toString();
-                QR qr = new QR();
-                qr.setIdUsuario(idUsuario);
-                qr.setCodigo(codigoQr);
-                qr.setFechaCreacion(LocalDateTime.now());
-                qr.setVigente(true);
-                qr.setUsosDisponibles(-1); // Ajusta según tus necesidades
-                qr.setIdInvitado(null); // No es un invitado
+                QR qr = mapperQR.fromDtoQrInToQrResidente(qrIn);
+                
                 qrRepository.save(qr);
-                System.out.println("Código QR generado para idUsuario: " + idUsuario + ", código: " + codigoQr);
+                usuarioRepository.save(usuario);
             } else {
-                System.out.println("Código QR ya existe para idUsuario: " + idUsuario);
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El estado del usuario no puede ser cambiado a " + in.getEstado());
             }
+            
+            return new ResponseEntity<>(new ApiResponse("Usuario actualizado correctamente"), HttpStatus.OK);
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
         }
-
-        return ResponseEntity.ok(new ApiResponse("Estado actualizado correctamente"));
     }
 
     @Override
