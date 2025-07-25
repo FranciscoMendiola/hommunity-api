@@ -27,9 +27,10 @@ public class SvcInvitadoImp implements SvcInvitado {
     private MapperInvitado mapper;
 
     @Override
-    public ResponseEntity<List<Invitado>> getInvitados() {
+    public ResponseEntity<List<Invitado>> getInvitados(Long idUsuario) {
         try {
-            List<Invitado> invitados = invitadoRepository.findAll();
+            //List<Invitado> invitados = invitadoRepository.findAll();
+            List<Invitado> invitados = invitadoRepository.findTop5ByIdUsuarioOrderByFechaEntradaDesc(idUsuario);
 
             return new ResponseEntity<>(invitados, HttpStatus.OK);
         } catch (DataAccessException e) {

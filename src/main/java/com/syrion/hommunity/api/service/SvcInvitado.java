@@ -10,7 +10,7 @@ import com.syrion.hommunity.common.dto.ApiResponse;
 
 public interface SvcInvitado {
 
-    public ResponseEntity<List<Invitado>> getInvitados();
+    public ResponseEntity<List<Invitado>> getInvitados(Long idUsuario);
     public ResponseEntity<Invitado> getInvitado(Long id);
     public ResponseEntity<ApiResponse> createInvitado(DtoInvitadoIn in);
 }

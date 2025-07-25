@@ -46,7 +46,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/familia/**").hasAnyAuthority("ADMINISTRADOR")
 
                         // Invitado
-                        .requestMatchers(HttpMethod.GET, "/invitado").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/invitado").permitAll()
+                        //.requestMatchers(HttpMethod.GET, "/invitado").hasAnyAuthority("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.GET, "/invitado/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
                         .requestMatchers(HttpMethod.POST, "/invitado/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
 

@@ -32,10 +32,10 @@ public class InvitadoController {
     @Autowired
     SvcInvitado svc;
     
-    @GetMapping
-    @Operation(summary = "Obtener lista de invitados", description = "Permite obtener una lista de todos los invitados registrados en el sistema.")
-    public ResponseEntity<List<Invitado>> getInvitados() {
-        return svc.getInvitados();
+    @GetMapping("/usuario/{idUsuario}")
+    @Operation(summary = "Obtener lista de invitados por usuario", description = "Permite obtener los últimos 5 invitados registrados por el usuario especificado.")
+    public ResponseEntity<List<Invitado>> getInvitadosPorUsuario(@PathVariable Long idUsuario) {
+        return svc.getInvitados(idUsuario);
     }
 
     @GetMapping("/{id}")
