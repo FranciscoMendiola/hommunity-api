@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import com.google.zxing.WriterException; // Importar WriterException
 import com.syrion.hommunity.api.dto.in.DtoInvitadoIn;
+import com.syrion.hommunity.api.dto.in.DtoRenovarInvitadoIn;
+import com.syrion.hommunity.api.dto.out.DtoInvitadoListOut;
 import com.syrion.hommunity.api.dto.out.DtoQrInvitadoOut;
 import com.syrion.hommunity.api.entity.Invitado;
 import com.syrion.hommunity.api.entity.QR;
@@ -43,12 +46,47 @@ public class SvcInvitadoImp implements SvcInvitado {
     @Autowired
     private MapperQR mapperQR;
 
-    // ... los métodos getInvitados y getInvitado se mantienen igual ...
     @Override
-    public ResponseEntity<List<Invitado>> getInvitados(Long idUsuario) {
+    public ResponseEntity<List<DtoInvitadoListOut>> getInvitados(Long idUsuario) {
         try {
             List<Invitado> invitados = invitadoRepository.findTop5ByIdUsuarioOrderByFechaEntradaDesc(idUsuario);
-            return new ResponseEntity<>(invitados, HttpStatus.OK);
+            ZoneId zonaCST = ZoneId.of("America/Mexico_City");
+            LocalDateTime ahora = LocalDateTime.now(zonaCST);
+            
+            List<DtoInvitadoListOut> response = new ArrayList<>();
+            
+            for (Invitado invitado : invitados) {
+                DtoInvitadoListOut dto = new DtoInvitadoListOut();
+                // Mapear propiedades básicas
+                dto.setIdInvitado(invitado.getIdInvitado());
+                dto.setNombre(invitado.getNombre());
+                dto.setApellidoPaterno(invitado.getApellidoPaterno());
+                dto.setApellidoMaterno(invitado.getApellidoMaterno());
+                dto.setFechaEntrada(invitado.getFechaEntrada());
+                dto.setFechaSalida(invitado.getFechaSalida());
+                
+                // Calcular vigencia
+                boolean vigente = true;
+                
+                // 1. Verificar fechas
+                if (ahora.isAfter(invitado.getFechaSalida())) {
+                    vigente = false;
+                }
+                
+                // 2. Verificar estado del QR si existe
+                QR qr = qrRepository.findByIdInvitado(invitado.getIdInvitado()).orElse(null);
+                if (qr != null) {
+                    // Si el QR no está vigente o no tiene usos disponibles
+                    if (!qr.getVigente() || (qr.getUsosDisponibles() != null && qr.getUsosDisponibles() <= 0)) {
+                        vigente = false;
+                    }
+                }
+                
+                dto.setVigente(vigente);
+                response.add(dto);
+            }
+            
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (DataAccessException e) {
             throw new DBAccessException(e);
         }
@@ -200,5 +238,41 @@ public class SvcInvitadoImp implements SvcInvitado {
 
     private boolean isOverlap(LocalDateTime start1, LocalDateTime end1, LocalDateTime start2, LocalDateTime end2) {
         return start1.isBefore(end2) && start2.isBefore(end1);
+    }
+
+    @Override
+    @Transactional // Es CRUCIAL para asegurar que ambas entidades (Invitado y QR) se guarden correctamente.
+    public ResponseEntity<ApiResponse> renovarInvitado(Long idUsuario, Long id, DtoRenovarInvitadoIn in) {
+        try {
+            // 1. Validar que la fecha de salida sea posterior a la de entrada
+            if (in.getFechaSalida().isBefore(in.getFechaEntrada())) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "La fecha de salida no puede ser anterior a la de entrada.");
+            }
+            
+            // 2. Buscar al invitado y asegurarse de que pertenece al usuario
+            Invitado invitado = invitadoRepository.findByIdInvitadoAndIdUsuario(id, idUsuario)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Invitado no encontrado o no pertenece a esta familia."));
+
+            // 3. Buscar el QR asociado
+            QR qr = qrRepository.findByIdInvitado(invitado.getIdInvitado())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "No se encontró un QR para este invitado."));
+
+            // 4. Actualizar los datos del invitado
+            invitado.setFechaEntrada(in.getFechaEntrada());
+            invitado.setFechaSalida(in.getFechaSalida());
+
+            // 5. Actualizar los datos del QR y reactivarlo
+            qr.setUsosDisponibles(in.getUsosDisponibles());
+            qr.setVigente(true); // ¡Punto clave para que vuelva a funcionar!
+
+            // 6. Guardar los cambios en la base de datos
+            invitadoRepository.save(invitado);
+            qrRepository.save(qr);
+            
+            return new ResponseEntity<>(new ApiResponse("Invitación renovada correctamente"), HttpStatus.OK);
+
+        } catch (DataAccessException e) {
+            throw new DBAccessException(e);
+        }
     }
 }
