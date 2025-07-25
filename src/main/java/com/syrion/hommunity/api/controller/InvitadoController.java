@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.syrion.hommunity.api.dto.in.DtoInvitadoIn;
+import com.syrion.hommunity.api.dto.out.DtoQrInvitadoOut;
 import com.syrion.hommunity.api.entity.Invitado;
 import com.syrion.hommunity.api.service.SvcInvitado;
 import com.syrion.hommunity.common.dto.ApiResponse;
@@ -26,22 +28,30 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/invitado")
-@Tag (name = "Invitado", description = "Gestión de invitados")
+@Tag(name = "Invitado", description = "Gestión de invitados")
 public class InvitadoController {
 
     @Autowired
     SvcInvitado svc;
-    
-    @GetMapping
-    @Operation(summary = "Obtener lista de invitados", description = "Permite obtener una lista de todos los invitados registrados en el sistema.")
-    public ResponseEntity<List<Invitado>> getInvitados() {
-        return svc.getInvitados();
+
+    @GetMapping("/usuario/{idUsuario}")
+    @Operation(summary = "Obtener lista de invitados por usuario", description = "Permite obtener los últimos 5 invitados registrados por el usuario especificado.")
+    public ResponseEntity<List<Invitado>> getInvitadosPorUsuario(@PathVariable Long idUsuario) {
+        return svc.getInvitados(idUsuario);
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Obtener invitado por ID", description = "Permite obtener los detalles de un invitado específico por su ID.")
     public ResponseEntity<Invitado> getInvitado(@Valid @PathVariable("id") Long id) {
         return svc.getInvitado(id);
+    }
+
+    @GetMapping("/familia/{idUsuario}/detalles/{id}")
+    @Operation(summary = "Obtener detalles de invitado por familia", description = "Obtiene los detalles de un invitado filtrado por el ID del usuario de la familia.")
+    public ResponseEntity<DtoQrInvitadoOut> getInvitadoDetailsByFamily(
+            @Valid @PathVariable("idUsuario") Long idUsuario,
+            @Valid @PathVariable("id") Long id) {
+        return svc.getInvitadoDetailsByFamily(idUsuario, id);
     }
 
     @PostMapping
@@ -53,5 +63,13 @@ public class InvitadoController {
             throw new ApiException(HttpStatus.BAD_REQUEST, errorMessage);
         }
         return svc.createInvitado(in);
+    }
+
+    @DeleteMapping("/familia/{idUsuario}/{id}")
+    @Operation(summary = "Eliminar invitado por familia", description = "Elimina un invitado filtrado por el ID del usuario de la familia.")
+    public ResponseEntity<ApiResponse> deleteInvitadoByFamily(
+            @Valid @PathVariable("idUsuario") Long idUsuario,
+            @Valid @PathVariable("id") Long id) {
+        return svc.deleteInvitadoByFamily(idUsuario, id);
     }
 }

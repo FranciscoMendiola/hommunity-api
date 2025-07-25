@@ -30,7 +30,7 @@ public class DtoQrInvitadoOut {
     private Integer usosDisponibles;
 
     @JsonProperty("nombreInvitado")
-    private String NombreInvitado;
+    private String nombreInvitado;
 
     @JsonProperty("qrImageBytes")
     private byte[] qrImageBytes;
