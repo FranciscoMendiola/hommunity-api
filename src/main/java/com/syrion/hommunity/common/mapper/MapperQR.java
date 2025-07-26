@@ -34,7 +34,7 @@ public class MapperQR {
         return qr;
     }
 
-    private String generateNumericCode() {
+    public String generateNumericCode() {
         long number = 1000000000L + (long)(Math.random() * 9000000000L);
         return String.valueOf(number);
     }
@@ -52,18 +52,32 @@ public class MapperQR {
         return qrOut;
     }
 
-	public DtoQrInvitadoOut fromQrToDtoQrInvitadoOut(QR qr, Invitado invitado) {
+    public DtoQrInvitadoOut fromQrToDtoQrInvitadoOut(QR qr, Invitado invitado) {
         DtoQrInvitadoOut qrOut = new DtoQrInvitadoOut();
 
-		qrOut.setIdQr(qr.getIdQr());
+        qrOut.setIdQr(qr.getIdQr());
         qrOut.setCodigo(qr.getCodigo());
         qrOut.setVigente(qr.getVigente());
         qrOut.setUsosDisponibles(qr.getUsosDisponibles());
         qrOut.setFechaEntrada(invitado.getFechaEntrada());
         qrOut.setFechaSalida(invitado.getFechaSalida());
-        String apelldoMaterno = invitado.getApellidoMaterno() == null ? "": invitado.getApellidoMaterno(); 
-        qrOut.setNombreInvitado(invitado.getNombre() + invitado.getApellidoPaterno() + apelldoMaterno);
+        
+        // Corregir la concatenación del nombre con espacios apropiados
+        StringBuilder nombreCompleto = new StringBuilder();
+        nombreCompleto.append(invitado.getNombre() != null ? invitado.getNombre() : "");
+        
+        if (invitado.getApellidoPaterno() != null && !invitado.getApellidoPaterno().isEmpty()) {
+            if (nombreCompleto.length() > 0) nombreCompleto.append(" ");
+            nombreCompleto.append(invitado.getApellidoPaterno());
+        }
+        
+        if (invitado.getApellidoMaterno() != null && !invitado.getApellidoMaterno().isEmpty()) {
+            if (nombreCompleto.length() > 0) nombreCompleto.append(" ");
+            nombreCompleto.append(invitado.getApellidoMaterno());
+        }
+        
+        qrOut.setNombreInvitado(nombreCompleto.toString().trim());
 
         return qrOut;
-	}
+    }
 }
