@@ -22,6 +22,7 @@ import com.syrion.hommunity.api.dto.out.DtoQrUsuarioCodigoOut;
 import com.syrion.hommunity.api.dto.out.DtoQrUsuarioOut;
 import com.syrion.hommunity.api.entity.Invitado;
 import com.syrion.hommunity.api.entity.QR;
+import com.syrion.hommunity.api.entity.Usuario;
 import com.syrion.hommunity.api.repository.InvitadoRepository;
 import com.syrion.hommunity.api.repository.QrRepository;
 import com.syrion.hommunity.common.dto.ApiResponse;
@@ -43,6 +44,9 @@ public class SvcQrImp implements SvcQr {
 
     @Autowired
     private MapperQR mapper;
+
+    @Autowired
+    private com.syrion.hommunity.api.repository.UsuarioRepository usuarioRepository;
 
     @Override
     @Transactional
@@ -196,36 +200,77 @@ public class SvcQrImp implements SvcQr {
         }
     }
 
-    @Override
-    public ResponseEntity<ApiResponse> scanQr(String codigo) {
-        try {
-            QR qr = qrRepository.findByCodigo(codigo);
+@Override
+@Transactional
+public ResponseEntity<ApiResponse> scanQr(String codigo, Long idZona) {
+    try {
+        QR qr = qrRepository.findByCodigo(codigo);
+        
+        System.out.println("=== DEBUG SCAN QR ===");
+        System.out.println("Código buscado: " + codigo);
+        System.out.println("ID Zona recibida: " + idZona);
 
-            if (qr == null) {
-                throw new ApiException(HttpStatus.NOT_FOUND, "Código QR no encontrado.");
-            }
-
-            if (!qr.getVigente()) {
-                throw new ApiException(HttpStatus.BAD_REQUEST, "El código QR ha expirado o ya no es válido.");
-            }
-
-            if (qr.getIdInvitado() != null) {
-                if (qr.getUsosDisponibles() <= 0) {
-                    qr.setVigente(false);
-                    qrRepository.save(qr);
-                    throw new ApiException(HttpStatus.BAD_REQUEST, "El código QR ya no tiene usos disponibles.");
-                }
-                qr.setUsosDisponibles(qr.getUsosDisponibles() - 1);
-            }
-
-            qrRepository.save(qr);
-
-            return new ResponseEntity<>(new ApiResponse("El código QR es válido."), HttpStatus.OK);
-
-        } catch (DataAccessException e) {
-            throw new DBAccessException(e);
+        if (qr == null) {
+            System.out.println("QR no encontrado");
+            throw new ApiException(HttpStatus.NOT_FOUND, "Código QR no encontrado.");
         }
+
+        System.out.println("QR vigente: " + qr.getVigente());
+        System.out.println("QR usos disponibles: " + qr.getUsosDisponibles());
+        System.out.println("QR idUsuario: " + qr.getIdUsuario());
+        System.out.println("QR idInvitado: " + qr.getIdInvitado());
+
+        if (!qr.getVigente()) {
+            System.out.println("QR no vigente - rechazando");
+            throw new ApiException(HttpStatus.BAD_REQUEST, "El código QR ha expirado o ya no es válido.");
+        }
+
+        // Validar que el código pertenece a la misma zona
+        if (qr.getIdUsuario() != null) {
+            System.out.println("Es QR de residente");
+            // Es un residente
+            Usuario usuario = usuarioRepository.findById(qr.getIdUsuario())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Usuario no encontrado."));
+            System.out.println("Usuario zona: " + usuario.getIdZona());
+            if (!usuario.getIdZona().equals(idZona)) {
+                throw new ApiException(HttpStatus.UNAUTHORIZED, "No tienes permiso para validar este código (zona diferente).");
+            }
+        } else if (qr.getIdInvitado() != null) {
+            System.out.println("Es QR de invitado");
+            // Es un invitado
+            Invitado invitado = invitadoRepository.findById(qr.getIdInvitado())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Invitado no encontrado."));
+            Usuario creador = usuarioRepository.findById(invitado.getIdUsuario())
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Usuario creador del invitado no encontrado."));
+
+            System.out.println("Creador zona: " + creador.getIdZona());
+            if (!creador.getIdZona().equals(idZona)) {
+                throw new ApiException(HttpStatus.UNAUTHORIZED, "No tienes permiso para validar este código (zona diferente).");
+            }
+
+            System.out.println("Verificando usos - Disponibles: " + qr.getUsosDisponibles());
+            if (qr.getUsosDisponibles() <= 0) {
+                System.out.println("Sin usos - invalidando QR");
+                qr.setVigente(false);
+                qrRepository.save(qr);
+                throw new ApiException(HttpStatus.BAD_REQUEST, "El código QR ya no tiene usos disponibles.");
+            }
+
+            System.out.println("Reduciendo usos de " + qr.getUsosDisponibles() + " a " + (qr.getUsosDisponibles() - 1));
+            qr.setUsosDisponibles(qr.getUsosDisponibles() - 1);
+        }
+
+        System.out.println("Guardando QR - Usos finales: " + qr.getUsosDisponibles());
+        qrRepository.save(qr);
+        System.out.println("=== FIN DEBUG ===");
+
+        return new ResponseEntity<>(new ApiResponse("El código QR es válido."), HttpStatus.OK);
+
+    } catch (DataAccessException e) {
+        throw new DBAccessException(e);
     }
+}
+
 
     private QR validateId(Long id) {
 

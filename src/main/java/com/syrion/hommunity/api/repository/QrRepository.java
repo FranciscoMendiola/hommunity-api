@@ -18,4 +18,5 @@ public interface QrRepository extends JpaRepository<QR, Long> {
 
     @Query(value = "SELECT * FROM qr WHERE codigo = :codigo", nativeQuery = true)
     QR findByCodigo(@Param("codigo") String codigo);
+
 }

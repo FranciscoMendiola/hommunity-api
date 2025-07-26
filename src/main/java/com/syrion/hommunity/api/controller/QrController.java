@@ -2,17 +2,21 @@ package com.syrion.hommunity.api.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.syrion.hommunity.api.dto.in.DtoQrInvitadoIn;
 import com.syrion.hommunity.api.dto.in.DtoQrUsuarioIn;
 import com.syrion.hommunity.api.dto.out.DtoQrInvitadoOut;
-import com.syrion.hommunity.api.dto.out.DtoQrUsuarioOut;
 import com.syrion.hommunity.api.dto.out.DtoQrUsuarioCodigoOut;
+import com.syrion.hommunity.api.dto.out.DtoQrUsuarioOut;
 import com.syrion.hommunity.api.service.SvcQr;
 import com.syrion.hommunity.common.dto.ApiResponse;
 import com.syrion.hommunity.exception.ApiException;
@@ -46,12 +50,14 @@ public class QrController {
         return svc.createCodigoInvitado(in);
     }
 
-    @GetMapping("{codigo}/scan")
-    @Operation(summary = "Escanear y validar código QR", description = "Permite validar un código QR escaneado por el código directamente.")
+    @GetMapping("/{codigo}/scan/{idZona}")
+    @Operation(summary = "Escanear código QR", description = "Permite escanear un código QR y registrar la entrada de un invitado o residente.")
     public ResponseEntity<ApiResponse> scanQr(
-            @PathVariable String codigo) {
-        return svc.scanQr(codigo);
+            @PathVariable String codigo,
+            @PathVariable Long idZona) {
+        return svc.scanQr(codigo, idZona);
     }
+
 
     @PostMapping("/residente")
     @Operation(summary = "Crear código QR para residente", description = "Permite crear un código QR para un residente con vigencia de acceso prolongada.")

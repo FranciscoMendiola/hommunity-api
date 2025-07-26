@@ -55,6 +55,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/qr/active").hasAnyAuthority("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.GET, "/qr/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE", "GUARDIA")
                         .requestMatchers(HttpMethod.POST, "/qr/invitado").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        .requestMatchers(HttpMethod.GET, "/qr/{codigo}/scan/{idZona}").hasAnyAuthority("ADMINISTRADOR", "GUARDIA")
                         .requestMatchers(HttpMethod.POST, "/qr/**").hasAnyAuthority("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.POST, "/qr/residente/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
 
