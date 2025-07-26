@@ -51,9 +51,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/invitado/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
 
                         // Qr
-                        .requestMatchers(HttpMethod.GET, "/qr").hasAnyAuthority("ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/qr").hasAnyAuthority("ADMINISTRADOR", "GUARDIA")
                         .requestMatchers(HttpMethod.GET, "/qr/active").hasAnyAuthority("ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.GET, "/qr/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        .requestMatchers(HttpMethod.GET, "/qr/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE", "GUARDIA")
                         .requestMatchers(HttpMethod.POST, "/qr/invitado").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
                         .requestMatchers(HttpMethod.POST, "/qr/**").hasAnyAuthority("ADMINISTRADOR")
                         .requestMatchers(HttpMethod.POST, "/qr/residente/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
@@ -64,11 +64,10 @@ public class SecurityConfig {
 
                         // Usuario
                         .requestMatchers(HttpMethod.POST, "/usuario").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/usuario/zona/**").hasAnyAuthority("ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.GET, "/usuario/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
+                        .requestMatchers(HttpMethod.GET, "/usuario/zona/**").hasAnyAuthority("ADMINISTRADOR", "GUARDIA")
+                        .requestMatchers(HttpMethod.GET, "/usuario/**").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE", "GUARDIA")
                         .requestMatchers(HttpMethod.GET, "/usuario/estado/pendiente/{idZona}").hasAnyAuthority("ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.GET, "/usuario/estado/pendiente/{idZona}/registrador/{idUsuarioRegistrador}")
-                            .hasAnyAuthority("RESIDENTE")
+                        .requestMatchers(HttpMethod.GET, "/usuario/estado/pendiente/{idZona}/registrador/{idUsuarioRegistrador}").hasAnyAuthority("RESIDENTE")
                         .requestMatchers(HttpMethod.PATCH, "/usuario/*/estado").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
                         .requestMatchers(HttpMethod.PATCH, "/usuario/*/contraseña").hasAnyAuthority("ADMINISTRADOR", "RESIDENTE")
                         .requestMatchers(HttpMethod.POST, "/usuario/**").hasAnyAuthority("ADMINISTRADOR")
