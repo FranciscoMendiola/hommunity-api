@@ -14,15 +14,16 @@ import com.syrion.hommunity.common.dto.ApiResponse;
 
 public interface SvcUsuario {
     ResponseEntity<DtoUsuarioOut> getUsuario(Long idUsuario);
-    ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorZona(Long idZona);
     ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorFamilia(Long idFamilia);
     ResponseEntity<List<DtoFamiliaPersonasOut>> getUsuariosAprobadosPorFamilia(Long idFamilia);
-    ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesAdmin(Long idZona);
-    ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZonaYRegistrador(Long idZona, Long idUsuarioRegistrador);
+    ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesAdmin(Long idZona);    
     ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesResidente(Long idZona);
     ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in);
     ResponseEntity<ApiResponse> deleteUsuario(Long idUsuario);
     ResponseEntity<ApiResponse> updateEstadoUsuario(Long idUsuario, DtoEstadoUsuariIn in, Authentication authentication);
     ResponseEntity<ApiResponse> updateContraseña(Long idUsuario, DtoUsuarioContraseñaIn in);
+    
     boolean isRegistrador(String idUsuario);
+    ResponseEntity<List<DtoUsuarioOut>> getUsuariosPorZona(Long idZona);
+    
 }

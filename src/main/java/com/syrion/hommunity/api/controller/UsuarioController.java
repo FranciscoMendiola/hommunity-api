@@ -68,30 +68,22 @@ public class UsuarioController {
         return svUsuario.getUsuariosAprobadosPorFamilia(idFamilia);
     }
 
-    // Obtener usuarios por estado "PENDIENTE" por zona SIN registrador
-    @GetMapping("/estado/pendiente/{idZona}")
-    @Operation(summary = "Obtener usuarios pendientes por zona",
+    // Obtener usuarios por estado "PENDIENTE" por zona para administrador
+    @GetMapping("/pendiente/{idZona}/administrador")
+    @Operation(summary = "Obtener usuarios pendientes por zona para administrador",
             description = "Permite obtener una lista de usuarios pendientes en una zona específica.")
-    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZona(@PathVariable Long idZona) {
+    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesAdministrador(@PathVariable Long idZona) {
         return svUsuario.getUsuariosPendientesAdmin(idZona);
     }
 
-    // Obtener usuarios "PENDIENTE" por zona CON registrador
-    @GetMapping("/estado/pendiente-con-registrador/{idZona}")
-    @Operation(summary = "Obtener usuarios pendientes por zona con registrador",
+    // Obtener usuarios "PENDIENTE" por zona para registrador
+    @GetMapping("/pendiente/{idFamilia}/residente")
+    @Operation(summary = "Obtener usuarios pendientes por zona para residente registrador",
             description = "Permite obtener usuarios pendientes en una zona donde las familias tienen usuario registrador asignado.")
-    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZonaConRegistrador(@PathVariable Long idZona) {
-        return svUsuario.getUsuariosPendientesResidente(idZona);
+    public ResponseEntity<List<DtoUsuarioOut>>  getUsuariosPendientesResidente(@PathVariable Long idFamilia) {
+        return svUsuario.getUsuariosPendientesResidente(idFamilia);
     }
 
-
-    @PreAuthorize("hasAuthority('RESIDENTE') and #idUsuarioRegistrador == authentication.principal")
-    @GetMapping("/estado/pendiente/{idZona}/registrador/{idUsuarioRegistrador}")
-    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZonaYRegistrador(
-        @PathVariable Long idZona,
-        @PathVariable Long idUsuarioRegistrador) {
-        return svUsuario.getUsuariosPendientesPorZonaYRegistrador(idZona, idUsuarioRegistrador);
-    }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Crear usuario", description = "Permite crear un nuevo usuario en el sistema.")
@@ -144,4 +136,6 @@ public class UsuarioController {
         }
         return svUsuario.updateContraseña(idUsuario, in);
     }
+
+
 }

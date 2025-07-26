@@ -62,8 +62,7 @@ public class SvcUsuarioImp implements SvcUsuario {
     private SvcQr svcQr;
 
     @Autowired
-    private MapperQR mapperQR;
-
+    private MapperQR mapperQr;
     
     @Value("${app.upload.dir}")
 	private String uploadDir;
@@ -208,9 +207,12 @@ public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
     }
   
     @Override
-    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesResidente(Long idZona) {
+    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesResidente(Long idFamilia) {
         try {
-            List<Usuario> usuarios = usuarioRepository.findUsuariosPendientesPorZonaConRegistrador(idZona);
+            if (!familiaRepository.existsById(idFamilia)) {
+                throw new ApiException(HttpStatus.NOT_FOUND, "Familia no encontrada con id: " + idFamilia);
+            }
+            List<Usuario> usuarios = usuarioRepository.findUsuariosPendientesPorFamilia(idFamilia);
             List<DtoUsuarioOut> usuariosOut = mapper.fromListUsuarioToDtoUsuarioOut(usuarios);
             return new ResponseEntity<>(usuariosOut, HttpStatus.OK);
         } catch (DataAccessException e) {
@@ -223,7 +225,7 @@ public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
     @Override
     public ResponseEntity<List<DtoFamiliaPersonasOut>> getUsuariosAprobadosPorFamilia(Long idFamilia) {
         try {
-            List<Usuario> usuarios = usuarioRepository.findByIdFamiliaAndEstado(idFamilia, "APROBADO");
+            List<Usuario> usuarios = usuarioRepository.findUsuariosAprobadosPorFamilia(idFamilia);
             List<DtoFamiliaPersonasOut> dtos = mapper.fromListUsuarioToDtoFamiliaPersonasOut(usuarios);
             return ResponseEntity.ok(dtos);
         } catch (DataAccessException e) {
@@ -259,7 +261,7 @@ public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
                 DtoQrUsuarioIn qrIn =  new DtoQrUsuarioIn();
                 qrIn.setIdUsuario(usuario.getIdUsuario());
 
-                QR qr = mapperQR.fromDtoQrInToQrResidente(qrIn);
+                QR qr = mapperQr.fromDtoQrInToQrResidente(qrIn);
                 
                 qrRepository.save(qr);
                 usuarioRepository.save(usuario);
@@ -300,21 +302,5 @@ public ResponseEntity<ApiResponse> createUsuario(DtoUsuarioIn in) {
             throw new ApiException(HttpStatus.NOT_FOUND, "El id del usuario no esta registrado.");
 
         return usuario;
-    }
-
-    @Override
-    public ResponseEntity<List<DtoUsuarioOut>> getUsuariosPendientesPorZonaYRegistrador(Long idZona, Long idUsuarioRegistrador) {
-        if (!zonaRepository.existsById(idZona)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Zona no encontrada con id: " + idZona);
-        }
-        if (!usuarioRepository.existsById(idUsuarioRegistrador)) {
-            throw new ApiException(HttpStatus.NOT_FOUND, "Usuario registrador no encontrado con id: " + idUsuarioRegistrador);
-        }
-        if (!familiaRepository.existsByIdUsuarioRegistrador(idUsuarioRegistrador)) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, "El usuario no es registrador de ninguna familia en la zona: " + idZona);
-        }
-        List<Usuario> pendientes = usuarioRepository.findByIdZonaAndEstadoAndUsuarioRegistrador(idZona, "PENDIENTE", idUsuarioRegistrador);
-        List<DtoUsuarioOut> lista = mapper.fromListUsuarioToDtoUsuarioOut(pendientes);
-        return ResponseEntity.ok(lista);
     }
 }
